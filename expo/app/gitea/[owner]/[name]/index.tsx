@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList } from 'react-native';
 import * as api from '../../../../gitea';
+import { RepoHead } from '../../../../repo-head';
 import {
   Cluster,
   Empty,
@@ -18,9 +19,8 @@ import {
   usePagePad,
 } from '../../../../kasane';
 
-/* One repository: its issues and its pulls. Two trays, the sections and then the state, which is
-   the pair the web client draws on this page. The counts sit inside the tray items rather than
-   being written into the labels.
+/* One repository: its issues and its pulls, under the repository's own head. The head is the way
+   back up, which is where the site puts it too.
 
    The instance keeps issues and pulls in one list, told apart by whether an entry carries a pull
    request, which is why the filter is here and not in the query. */
@@ -29,21 +29,27 @@ type Kind = 'issues' | 'pulls';
 type State = 'open' | 'closed';
 
 export default function Issues() {
-  const { owner, name } = useLocalSearchParams<{ owner: string; name: string }>();
+  const {
+    owner,
+    name,
+    kind: asked,
+  } = useLocalSearchParams<{ owner: string; name: string; kind?: string }>();
   const full = `${owner}/${name}`;
   const router = useRouter();
-  const [kind, setKind] = useState<Kind>('issues');
   const [state, setState] = useState<State>('open');
   const pad = usePagePad();
+  const kind: Kind = asked === 'pulls' ? 'pulls' : 'issues';
 
+  const repo = useQuery({ queryKey: ['repo', full], queryFn: () => api.repo(full) });
   const q = useQuery({ queryKey: ['issues', full], queryFn: () => api.issues(full) });
 
   const all = q.data ?? [];
   const rows = all.filter(
     (i) => (kind === 'pulls' ? !!i.pull_request : !i.pull_request) && i.state === state,
   );
-  const count = (k: Kind, st: State) =>
-    all.filter((i) => (k === 'pulls' ? !!i.pull_request : !i.pull_request) && i.state === st).length;
+  const count = (st: State) =>
+    all.filter((i) => (kind === 'pulls' ? !!i.pull_request : !i.pull_request) && i.state === st)
+      .length;
 
   return (
     <FlatList
@@ -52,31 +58,23 @@ export default function Issues() {
       contentContainerStyle={{ ...pad, gap: space[16] }}
       ListHeaderComponent={
         <>
+          <RepoHead repo={repo.data} tab={kind} />
           <Head
             title={kind === 'pulls' ? 'Pulls' : 'Issues'}
-            aside={`${count(kind, 'open') + count(kind, 'closed')} in ${full}`}
-          />
-          <Tray
-            label="Repository sections"
-            value={kind}
-            onChange={(v) => setKind(v as Kind)}
-            options={[
-              { value: 'issues', label: 'Issues', count: count('issues', 'open') },
-              { value: 'pulls', label: 'Pulls', count: count('pulls', 'open') },
-            ]}
+            aside={`${count('open') + count('closed')} in ${full}`}
           />
           <Tray
             label={kind === 'pulls' ? 'Pull state' : 'Issue state'}
             value={state}
             onChange={(v) => setState(v as State)}
             options={[
-              { value: 'open', label: 'Open', count: count(kind, 'open') },
-              { value: 'closed', label: 'Closed', count: count(kind, 'closed') },
+              { value: 'open', label: 'Open', count: count('open') },
+              { value: 'closed', label: 'Closed', count: count('closed') },
             ]}
           />
         </>
       }
-      ListHeaderComponentStyle={{ gap: space[8], marginBottom: space[8] }}
+      ListHeaderComponentStyle={{ gap: space[16], marginBottom: space[8] }}
       ListEmptyComponent={
         q.isPending ? (
           <Waiting />

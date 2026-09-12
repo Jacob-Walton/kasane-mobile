@@ -98,21 +98,18 @@ test('an empty collection says so, and a failure says what went wrong', async ()
   expect(onRetry).toHaveBeenCalled();
 });
 
-/* The bar is the site's, not a navigation bar: a brand, one labelled button that says where you
-   are, and no page title. The trail and the sections are both inside that button. */
-test('the bar says where you are and opens the trail', async () => {
+/* The bar is the site's: the brand, and the links as .kb-bar__nav draws them. The current one is
+   filled, so where you are is not carried by colour alone. */
+test('the bar draws its links, with the current one filled', async () => {
   const onBrand = jest.fn();
+  const go = jest.fn();
   const view = await render(
     <Bar
       onBrand={onBrand}
-      where={{
-        label: 'Controls',
-        items: [
-          { label: 'Kasane', group: 'Where you are' },
-          { label: 'Controls', checked: true },
-        ],
-      }}
-      items={[{ label: 'Parts', current: true }, { label: 'Repositories' }]}
+      items={[
+        { label: 'Parts', current: true },
+        { label: 'Repositories', onPress: go },
+      ]}
     />,
     { wrapper: Framed },
   );
@@ -120,14 +117,19 @@ test('the bar says where you are and opens the trail', async () => {
   await userEvent.press(view.getByLabelText('Home'));
   expect(onBrand).toHaveBeenCalledTimes(1);
 
-  // the button carries the last step of the trail, never an icon standing in for it
-  expect(view.getByText('Controls')).toBeTruthy();
-  expect(view.getByLabelText('Menu: Controls')).toBeTruthy();
+  const links = view.getAllByRole('link').filter((one) => one.props.accessibilityLabel !== 'Home');
+  expect(links).toHaveLength(2);
+  expect(links[0].props.accessibilityState.selected).toBe(true);
+  expect(links[1].props.accessibilityState.selected).toBe(false);
+
+  await userEvent.press(links[1]);
+  expect(go).toHaveBeenCalledTimes(1);
 });
 
-test('the bar has no menu when there is nowhere to go', async () => {
+test('the bar draws no links when there are none', async () => {
   const view = await render(<Bar />, { wrapper: Framed });
-  expect(view.queryByLabelText('Menu')).toBeNull();
+  expect(view.queryAllByRole('link').filter((one) => one.props.accessibilityLabel !== 'Home'))
+    .toHaveLength(0);
 });
 
 /* A choice and a switch are our own marks, so they carry the state a platform control would have

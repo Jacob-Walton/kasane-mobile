@@ -19,8 +19,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GROUPS } from '../gallery/groups';
-import { Bar, ToastProvider, useTheme, type MenuItem } from '../kasane';
+import { Bar, ToastProvider, useTheme } from '../kasane';
 
 /* The router gives routes and deep links. It gives no chrome: headerShown is off everywhere.
 
@@ -29,6 +28,10 @@ import { Bar, ToastProvider, useTheme, type MenuItem } from '../kasane';
 
    The faces are bundled, not asked of the OS, so a string reads in Kasane's face on both platforms
    and neither one substitutes its own.
+
+   The links sit in the bar itself: two sections fit, and collapsing two into a menu is the shape
+   of a site with four and an account beside it. Inside a repository the way up is its own head,
+   which is where the site puts it too.
 
    Nothing about a screen change is the platform's either. A link on the web swaps the page: there
    is no card sliding in from the right and no edge to swipe. animation none and gestureEnabled
@@ -41,43 +44,6 @@ const SECTIONS = [
   { at: '/', label: 'Parts' },
   { at: '/gitea', label: 'Repositories' },
 ];
-
-/* Where you are, as the rows the bar's menu opens with. The web puts this on the page as crumbs;
-   a phone has no room for a trail of small targets, so it goes in the menu, where every step is a
-   row you can hit with a thumb. */
-function trailOf(path: string, go: (to: string) => void): { label: string; items: MenuItem[] } {
-  const parts = path.split('/').filter(Boolean);
-  const trail: { label: string; at: string }[] = [];
-
-  if (parts[0] === 'parts') {
-    trail.push({ label: 'Kasane', at: '/' });
-    const group = GROUPS.find((one) => one.id === parts[1]);
-    if (group) trail.push({ label: group.title, at: `/parts/${group.id}` });
-  } else if (parts[0] === 'gitea') {
-    trail.push({ label: 'Repositories', at: '/gitea' });
-    if (parts[1] && parts[2]) {
-      trail.push({ label: `${parts[1]}/${parts[2]}`, at: `/gitea/${parts[1]}/${parts[2]}` });
-      if (parts[3]) {
-        trail.push({
-          label: `#${parts[3]}`,
-          at: `/gitea/${parts[1]}/${parts[2]}/${parts[3]}`,
-        });
-      }
-    }
-  } else {
-    trail.push({ label: 'Kasane', at: '/' });
-  }
-
-  return {
-    label: trail[trail.length - 1].label,
-    items: trail.map((step, i) => ({
-      label: step.label,
-      onPress: () => go(step.at),
-      checked: i === trail.length - 1,
-      group: i === 0 ? 'Where you are' : undefined,
-    })),
-  };
-}
 
 export default function Layout() {
   const { t, dark } = useTheme();
@@ -124,7 +90,6 @@ export default function Layout() {
   if (!ready) return null;
 
   const here = path.startsWith('/gitea') ? '/gitea' : '/';
-  const where = trailOf(path, (to) => router.navigate(to));
 
   return (
     <SafeAreaProvider style={{ backgroundColor: t.bg.page }}>
@@ -143,7 +108,6 @@ export default function Layout() {
               />
               <Bar
                 onBrand={() => router.navigate('/')}
-                where={where}
                 items={SECTIONS.map((one) => ({
                   label: one.label,
                   current: one.at === here,

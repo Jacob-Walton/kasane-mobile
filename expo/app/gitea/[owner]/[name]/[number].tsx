@@ -3,6 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 import * as api from '../../../../gitea';
 import { Markdown } from '../../../../markdown';
+import { RepoHead } from '../../../../repo-head';
 import {
   Button,
   Cluster,
@@ -31,6 +32,7 @@ export default function One() {
   const n = Number(number);
   const pad = usePagePad();
 
+  const repo = useQuery({ queryKey: ['repo', full], queryFn: () => api.repo(full) });
   const q = useQuery({
     queryKey: ['issue', full, n],
     queryFn: async () => ({
@@ -46,6 +48,7 @@ export default function One() {
 
   return (
     <ScrollView contentContainerStyle={{ ...pad, gap: space[16] }}>
+      <RepoHead repo={repo.data} tab="issues" />
       <View style={{ gap: space[8] }}>
         <Text kind="heading">
           {issue.title}{' '}

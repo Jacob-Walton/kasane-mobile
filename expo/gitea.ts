@@ -49,6 +49,8 @@ export const repos = async () => {
   return Array.isArray(body) ? body : body.data;
 };
 
+export const repo = (full: string) => get<Repo>(`/repos/${full}`);
+
 export const issues = (full: string) =>
   get<Issue[]>(`/repos/${full}/issues?state=all&limit=30`);
 

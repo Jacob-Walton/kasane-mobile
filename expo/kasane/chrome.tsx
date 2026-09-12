@@ -4,48 +4,31 @@ import { Seal } from '../seal';
 import { Press, control, face, radius, shadow, space, useTheme } from './theme';
 import { useBarInsets } from './page';
 import { Text } from './text';
-import { Menu, type MenuItem } from './feedback';
 
 /* .kb-bar: a pill that floats over the page. Surface ground, a hairline all round, the one radius,
    the bar shadow, 8 of padding, and 16 from the edge. Under 768 the CSS moves it to the bottom, so
    that is where it is here.
 
-   The web collapses its links into a small button labelled Menu and lets each page carry its own
-   crumbs. A phone has no room for a crumb trail and no pointer to aim at one, so the trail goes in
-   the menu instead and the button that opens it says where you are. That is the one thing this bar
-   carries that the web's does not, and it is why the button is the width of the bar: it is the
-   whole of the navigation, at the end a thumb reaches. */
+   The links sit in the bar, as .kb-bar__nav draws them: control height, 16 of padding inside, 4
+   between, secondary ink until the current one, which is filled. The web collapses them into a
+   menu only because it carries four of them and an account beside; a bar with two has room. */
 
 export type NavItem = { label: string; current?: boolean; onPress?: () => void };
 
 export function Bar({
-  where,
   items = [],
   actions,
   onBrand,
-  menuLabel = 'Menu',
+  label = 'Primary',
 }: {
-  /** what the menu button says, and the rows the menu opens with */
-  where?: { label: string; items?: MenuItem[] };
-  /** the sections, as the web's nav holds them */
   items?: NavItem[];
   /** sign in, an account menu */
   actions?: ReactNode;
   onBrand?: () => void;
-  menuLabel?: string;
+  label?: string;
 }) {
   const { t } = useTheme();
   const edge = useBarInsets();
-
-  const rows: MenuItem[] = [
-    ...(where?.items ?? []),
-    ...items.map<MenuItem>((item, i) => ({
-      label: item.label,
-      onPress: item.onPress,
-      checked: item.current,
-      group: i === 0 ? 'Sections' : undefined,
-    })),
-  ];
 
   return (
     <View
@@ -86,38 +69,37 @@ export function Bar({
           <Seal size={space[24]} decorative />
         </Press>
 
-        {rows.length ? (
-          <Menu
-            label={menuLabel}
-            items={rows}
-            trigger={(open) => (
-              <Press
-                accessibilityRole="button"
-                accessibilityLabel={`${menuLabel}: ${where?.label ?? ''}`.trim()}
-                onPress={open}
-                rest="transparent"
-                down={t.bg.pressed}
-                grow
+        <View accessibilityRole="tablist" accessibilityLabel={label} style={{ flexDirection: 'row', gap: space[4] }}>
+          {items.map((item) => (
+            <Press
+              key={item.label}
+              accessibilityRole="link"
+              accessibilityState={{ selected: !!item.current }}
+              onPress={item.onPress}
+              rest={item.current ? t.fill.default : 'transparent'}
+              down={item.current ? t.fill.active : t.bg.pressed}
+              style={{
+                height: control.md,
+                justifyContent: 'center',
+                paddingHorizontal: space[16],
+                borderRadius: radius,
+              }}
+            >
+              <Text
+                kind="small"
+                numberOfLines={1}
                 style={{
-                  height: control.md,
-                  justifyContent: 'center',
-                  paddingHorizontal: space[16],
-                  borderRadius: radius,
-                  borderWidth: 0.5,
-                  borderColor: t.border.control,
+                  color: item.current ? t.fg.onFill : t.fg.secondary,
+                  fontFamily: face.medium,
                 }}
               >
-                <Text kind="small" numberOfLines={1} style={{ fontFamily: face.medium }}>
-                  {where?.label ?? menuLabel}
-                </Text>
-              </Press>
-            )}
-          />
-        ) : (
-          <View style={{ flex: 1 }} />
-        )}
+                {item.label}
+              </Text>
+            </Press>
+          ))}
+        </View>
 
-        {actions}
+        {actions ? <View style={{ marginLeft: 'auto' }}>{actions}</View> : null}
       </View>
     </View>
   );

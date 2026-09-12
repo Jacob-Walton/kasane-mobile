@@ -22,10 +22,11 @@
 
     public var body: some View {
       let heavy = strong || step == .title || step == .heading
-      Text(step == .caps ? text.uppercased() : text)
-        .font(.kasane(step, face: heavy ? Face.semibold : Face.regular))
+      let face = heavy ? Face.semibold : Face.regular
+      return Text(step == .caps ? text.uppercased() : text)
+        .font(.kasane(step, face: face))
         .tracking(step.token.tracking * step.token.size)
-        .lineSpacing(step.token.size * (step.token.leading - 1))
+        .lineSpacing(Face.extraLeading(step, face: face))
         .foregroundStyle(muted ? k.fgSecondary : k.fg)
     }
   }
@@ -215,6 +216,50 @@
           )
       }
       .buttonStyle(.plain)
+    }
+  }
+
+  /// A ring with a gap in it. Two arcs and two heads would be a drawing; this reads as refresh and
+  /// needs no asset.
+  public struct Arrows: View {
+    @Environment(\.kasane) private var k
+    var step: Step = .body
+
+    public init(step: Step = .body) { self.step = step }
+
+    public var body: some View {
+      let edge = step.token.size + 2
+      return Circle()
+        .trim(from: 0, to: 0.75)
+        .stroke(k.fg, style: StrokeStyle(lineWidth: max(2, edge / 8), lineCap: .butt))
+        .frame(width: edge, height: edge)
+        .rotationEffect(.degrees(45))
+        .accessibilityHidden(true)
+    }
+  }
+
+  /// A refresh the bar can hold, since pull to refresh is the platform's control and its spinner.
+  public struct Refresh: View {
+    @Environment(\.kasane) private var k
+    let busy: Bool
+    var action: () -> Void = {}
+
+    public init(busy: Bool = false, action: @escaping () -> Void = {}) {
+      self.busy = busy
+      self.action = action
+    }
+
+    public var body: some View {
+      Button(action: action) {
+        Group {
+          if busy { Spinner(step: .body) } else { Arrows() }
+        }
+        .frame(width: Kasane.Control.md, height: Kasane.Control.md)
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .disabled(busy)
+      .accessibilityLabel("Refresh")
     }
   }
 

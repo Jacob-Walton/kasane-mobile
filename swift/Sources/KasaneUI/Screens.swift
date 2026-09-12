@@ -49,7 +49,7 @@
     public var body: some View {
       Kasaned {
         VStack(spacing: 0) {
-          Bar("Repositories") { Spinner(step: .body) }
+          Bar("Repositories") { Refresh() }
           scrolling(scrolls) {
             VStack(alignment: .leading, spacing: Kasane.Space.s8) {
               KText("\(items.count) public repositories", step: .small, muted: true)
@@ -82,7 +82,7 @@
     public var body: some View {
       Kasaned {
         VStack(spacing: 0) {
-          Bar("#4", back: {}) { Spinner(step: .body) }
+          Bar("#4", back: {}) { Refresh() }
           scrolling(scrolls) {
             VStack(alignment: .leading, spacing: Kasane.Space.s16) {
               VStack(alignment: .leading, spacing: Kasane.Space.s8) {

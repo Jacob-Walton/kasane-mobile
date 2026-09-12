@@ -66,6 +66,16 @@
     public static let medium = "IBMPlexSans-Medium"
     public static let semibold = "IBMPlexSans-SemiBold"
     public static let mono = "IBMPlexMono-Regular"
+
+    /// The tokens carry leading the way CSS does: a multiple of the size, counting the whole line.
+    /// SwiftUI counts lineSpacing as what to add on top of the face's own line height, so the
+    /// face's height has to come out of the token before it is handed over.
+    public static func extraLeading(_ step: Step, face: String) -> CGFloat {
+      _ = registered
+      let font = CTFontCreateWithName(face as CFString, step.token.size, nil)
+      let own = CTFontGetAscent(font) + CTFontGetDescent(font) + CTFontGetLeading(font)
+      return max(0, step.token.size * step.token.leading - own)
+    }
   }
 
   public enum Step {

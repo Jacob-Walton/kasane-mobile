@@ -8,7 +8,7 @@
   // The whole target is behind canImport so the package still builds on Windows, where SwiftUI does
   // not exist.
 
-  public struct Palette {
+  public struct Palette: Sendable {
     let dark: Bool
 
     public func colour(_ name: String) -> Color {

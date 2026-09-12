@@ -5,6 +5,17 @@
   // The two screens the Expo app has, in SwiftUI, on fixed content. Fixed because these are what CI
   // renders: a picture of a screen that fetched nothing is the only picture that is the same twice.
 
+  /// Wraps a screen's content in a scroll view, or does not. ImageRenderer draws pure SwiftUI and a
+  /// scroll view is bridged, so a snapshot of one comes back as bare ground: CI asks for false.
+  @ViewBuilder
+  func scrolling(_ on: Bool, @ViewBuilder _ content: () -> some View) -> some View {
+    if on {
+      ScrollView { content() }
+    } else {
+      content().frame(maxHeight: .infinity, alignment: .top)
+    }
+  }
+
   public struct Repos: View {
     public struct Item: Identifiable, Sendable {
       public let id: Int
@@ -21,9 +32,11 @@
     }
 
     let items: [Item]
+    let scrolls: Bool
 
-    public init(items: [Item] = Repos.sample) {
+    public init(items: [Item] = Repos.sample, scrolls: Bool = true) {
       self.items = items
+      self.scrolls = scrolls
     }
 
     public static let sample: [Item] = [
@@ -37,7 +50,7 @@
       Kasaned {
         VStack(spacing: 0) {
           Bar("Repositories") { Spinner(step: .body) }
-          ScrollView {
+          scrolling(scrolls) {
             VStack(alignment: .leading, spacing: Kasane.Space.s8) {
               KText("\(items.count) public repositories", step: .small, muted: true)
               Panel {
@@ -60,14 +73,17 @@
 
   public struct Issue: View {
     @State private var state = "open"
+    let scrolls: Bool
 
-    public init() {}
+    public init(scrolls: Bool = true) {
+      self.scrolls = scrolls
+    }
 
     public var body: some View {
       Kasaned {
         VStack(spacing: 0) {
           Bar("#4", back: {}) { Spinner(step: .body) }
-          ScrollView {
+          scrolling(scrolls) {
             VStack(alignment: .leading, spacing: Kasane.Space.s16) {
               VStack(alignment: .leading, spacing: Kasane.Space.s8) {
                 KText("Parse rgba tokens in Colour", step: .title)

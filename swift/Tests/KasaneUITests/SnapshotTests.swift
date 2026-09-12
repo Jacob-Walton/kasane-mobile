@@ -57,21 +57,21 @@
     private let tall: CGFloat = 844
 
     func testRepos() throws {
-      try shoot("repos-light", height: tall) { Repos() }
-      try shoot("repos-dark", height: tall, dark: true) { Repos() }
+      try shoot("repos-light", height: tall) { Repos(scrolls: false) }
+      try shoot("repos-dark", height: tall, dark: true) { Repos(scrolls: false) }
     }
 
     func testIssue() throws {
-      try shoot("issue-light", height: tall) { Issue() }
-      try shoot("issue-dark", height: tall, dark: true) { Issue() }
+      try shoot("issue-light", height: tall) { Issue(scrolls: false) }
+      try shoot("issue-dark", height: tall, dark: true) { Issue(scrolls: false) }
     }
 
     /// The reader's text scale is the one setting that breaks a phone layout, so it gets a picture
     /// at both ends of the range.
     func testTextScale() throws {
-      try shoot("issue-small", height: tall, type: .xSmall) { Issue() }
-      try shoot("issue-huge", height: tall, type: .accessibility3) { Issue() }
-      try shoot("repos-huge", height: tall, type: .accessibility3) { Repos() }
+      try shoot("issue-small", height: tall, type: .xSmall) { Issue(scrolls: false) }
+      try shoot("issue-huge", height: tall, type: .accessibility3) { Issue(scrolls: false) }
+      try shoot("repos-huge", height: tall, type: .accessibility3) { Repos(scrolls: false) }
     }
 
     /// The kit on its own, so a part that breaks is visible without reading a screen for it.

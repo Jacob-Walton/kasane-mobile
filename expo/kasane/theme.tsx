@@ -80,6 +80,7 @@ export function usePressGround(rest: string, down: string) {
 export function Press({
   rest,
   down,
+  grow,
   style,
   children,
   ...props
@@ -88,6 +89,8 @@ export function Press({
   rest: string;
   /** the ground under a finger */
   down: string;
+  /** fills the row it is in. The shape is on the inner view, so the outer one has to be told. */
+  grow?: boolean;
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
 } & Omit<PressableProps, 'style' | 'children'>) {
@@ -98,6 +101,7 @@ export function Press({
       unstable_pressDelay={0}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
+      style={grow ? { flex: 1 } : undefined}
       {...props}
     >
       <Animated.View style={[{ backgroundColor: ground }, style]}>{children}</Animated.View>

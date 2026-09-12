@@ -98,25 +98,36 @@ test('an empty collection says so, and a failure says what went wrong', async ()
   expect(onRetry).toHaveBeenCalled();
 });
 
-/* The bar is the site's, not a navigation bar: a brand, the links in a menu, and no page title. */
-test('the bar carries the brand and the links, and no page title', async () => {
+/* The bar is the site's, not a navigation bar: a brand, one labelled button that says where you
+   are, and no page title. The trail and the sections are both inside that button. */
+test('the bar says where you are and opens the trail', async () => {
   const onBrand = jest.fn();
   const view = await render(
-    <Bar onBrand={onBrand} items={[{ label: 'Parts', current: true }, { label: 'Repositories' }]} />,
+    <Bar
+      onBrand={onBrand}
+      where={{
+        label: 'Controls',
+        items: [
+          { label: 'Kasane', group: 'Where you are' },
+          { label: 'Controls', checked: true },
+        ],
+      }}
+      items={[{ label: 'Parts', current: true }, { label: 'Repositories' }]}
+    />,
     { wrapper: Framed },
   );
 
   await userEvent.press(view.getByLabelText('Home'));
   expect(onBrand).toHaveBeenCalledTimes(1);
 
-  // where you are, since the links themselves are behind the menu
-  expect(view.getByText('Parts')).toBeTruthy();
-  expect(view.getByLabelText('Sections')).toBeTruthy();
+  // the button carries the last step of the trail, never an icon standing in for it
+  expect(view.getByText('Controls')).toBeTruthy();
+  expect(view.getByLabelText('Menu: Controls')).toBeTruthy();
 });
 
 test('the bar has no menu when there is nowhere to go', async () => {
   const view = await render(<Bar />, { wrapper: Framed });
-  expect(view.queryByLabelText('Sections')).toBeNull();
+  expect(view.queryByLabelText('Menu')).toBeNull();
 });
 
 /* A choice and a switch are our own marks, so they carry the state a platform control would have
@@ -140,17 +151,18 @@ test('a choice and a switch say their state', async () => {
 /* The safe area is the one number the app cannot know and must not guess. A screen that does not
    spend it puts its first line under the notch and its last one under the bar. */
 test('a page spends the insets the OS reports, on every edge', async () => {
-  let pad: ReturnType<typeof usePagePad> | undefined;
+  const seen: ReturnType<typeof usePagePad>[] = [];
   const Probe = () => {
-    pad = usePagePad();
+    seen.push(usePagePad());
     return null;
   };
   await render(<Probe />, { wrapper: Framed });
+  const pad = seen[0];
 
-  // 47 of notch plus the 16 rung
-  expect(pad?.paddingTop).toBe(47 + 12);
-  // 34 of home indicator, the 16 under the bar, the bar, and the 16 above it
-  expect(pad?.paddingBottom).toBe(34 + 12 + (40 + 8 * 2) + 12);
-  expect(pad?.paddingLeft).toBe(12);
-  expect(pad?.paddingRight).toBe(12);
+  // 47 of notch plus the 16 rung, which compact remaps to 12
+  expect(pad.paddingTop).toBe(47 + 12);
+  // 34 of home indicator, the 12 under the bar, the bar, and the 12 above it
+  expect(pad.paddingBottom).toBe(34 + 12 + (40 + 8 * 2) + 12);
+  expect(pad.paddingLeft).toBe(12);
+  expect(pad.paddingRight).toBe(12);
 });

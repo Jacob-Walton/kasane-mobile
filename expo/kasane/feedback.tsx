@@ -1,8 +1,16 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  Fragment,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Modal, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { IconChevronDown, IconClose } from '../icons';
-import { Press, radius, shadow, space, useTheme } from './theme';
+import { IconCheck, IconChevronDown, IconClose } from '../icons';
+import { Press, control, radius, shadow, space, useTheme } from './theme';
 import { Cluster, Stack } from './layout';
 import { Text } from './text';
 import { Button } from './controls';
@@ -271,7 +279,16 @@ export function Accordion({
 
 /* .kb-menu: a list of things to do, opened by one control. On a phone it opens from the bottom
    edge: a popover anchored to a bar at the bottom of the screen has nowhere to go. */
-export type MenuItem = { label: string; onPress?: () => void; kind?: 'danger' };
+export type MenuItem = {
+  label: string;
+  onPress?: () => void;
+  kind?: 'danger';
+  /** a caps label above this item, which starts a group */
+  group?: string;
+  /** the one you are on */
+  checked?: boolean;
+  note?: string;
+};
 
 export function Menu({
   label,
@@ -291,26 +308,43 @@ export function Menu({
       <Drawer open={open} title={label} onClose={() => setOpen(false)}>
         <Stack gap={space[4]}>
           {items.map((item, i) => (
-            <Press
-              key={i}
-              accessibilityRole="menuitem"
-              onPress={() => {
-                setOpen(false);
-                item.onPress?.();
-              }}
-              rest="transparent"
-              down={t.bg.pressed}
-              style={{
-                minHeight: space[48],
-                justifyContent: 'center',
-                paddingHorizontal: space[16],
-                borderRadius: radius,
-              }}
-            >
-              <Text style={{ color: item.kind === 'danger' ? t.status.err : t.fg.default }}>
-                {item.label}
-              </Text>
-            </Press>
+            <Fragment key={i}>
+              {item.group ? (
+                <Text kind="caps" muted style={{ paddingHorizontal: space[16], paddingTop: space[8] }}>
+                  {item.group}
+                </Text>
+              ) : null}
+              <Press
+                accessibilityRole="menuitem"
+                accessibilityState={{ selected: !!item.checked }}
+                onPress={() => {
+                  setOpen(false);
+                  item.onPress?.();
+                }}
+                rest={item.checked ? t.bg.raised : 'transparent'}
+                down={t.bg.pressed}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: space[8],
+                  minHeight: control.lg,
+                  paddingHorizontal: space[16],
+                  borderRadius: radius,
+                }}
+              >
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={{ color: item.kind === 'danger' ? t.status.err : t.fg.default }}>
+                    {item.label}
+                  </Text>
+                  {item.note ? (
+                    <Text kind="caps" muted style={{ textTransform: 'none' }}>
+                      {item.note}
+                    </Text>
+                  ) : null}
+                </View>
+                {item.checked ? <IconCheck size={16} /> : null}
+              </Press>
+            </Fragment>
           ))}
         </Stack>
       </Drawer>

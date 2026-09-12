@@ -13,7 +13,6 @@ import {
   Meta,
   Status,
   Tray,
-  Crumbs,
   Waiting,
   space,
   usePagePad,
@@ -53,10 +52,6 @@ export default function Issues() {
       contentContainerStyle={{ ...pad, gap: space[16] }}
       ListHeaderComponent={
         <>
-          <Crumbs
-            trail={[{ label: 'Repositories', href: '/gitea' }, { label: full }]}
-            onPress={(href) => router.navigate(href)}
-          />
           <Head
             title={kind === 'pulls' ? 'Pulls' : 'Issues'}
             aside={`${count(kind, 'open') + count(kind, 'closed')} in ${full}`}

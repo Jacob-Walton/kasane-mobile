@@ -56,6 +56,20 @@
       "why": "This is the compact remap the web already applies to .kb-head__title under 768.",
       "where": ".kb-head__title",
       "themes": "both"
+    },
+    {
+      "id": "the-trail-is-in-the-bar",
+      "what": "A page carries no crumbs. The bar holds one button saying where you are, and it opens the trail and the sections as rows.",
+      "why": "The web puts crumbs on the page and lets the browser hold the back control. A phone has neither: a trail of 14px links is a row of targets too small to aim a thumb at, and a native app has no browser chrome. One wide button at the end a thumb reaches carries both.",
+      "where": ".kb-crumbs, .kb-bar__more",
+      "themes": "both"
+    },
+    {
+      "id": "a-link-swaps-the-page",
+      "what": "There is no push animation and no back swipe.",
+      "why": "A link on the web swaps the page. A card sliding in from the right is the platform, not the site.",
+      "where": "app/_layout.tsx, the Stack screenOptions",
+      "themes": "both"
     }
   ]
 }

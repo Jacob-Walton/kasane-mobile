@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import { IconMore } from '../icons';
 import { Seal } from '../seal';
 import { Press, control, face, radius, shadow, space, useTheme } from './theme';
 import { useBarInsets } from './page';
@@ -8,31 +7,45 @@ import { Text } from './text';
 import { Menu, type MenuItem } from './feedback';
 
 /* .kb-bar: a pill that floats over the page. Surface ground, a hairline all round, the one radius,
-   the bar shadow, 8 of padding, and 16 from the edge.
+   the bar shadow, 8 of padding, and 16 from the edge. Under 768 the CSS moves it to the bottom, so
+   that is where it is here.
 
-   Under 768 the CSS moves it to the bottom, so that is where it is here. The brand is a mark, the
-   links collapse into a menu, and the actions follow them. There is no page title in it and no back
-   control: the page says what it is in its own Head, and the OS owns going back. */
+   The web collapses its links into a small button labelled Menu and lets each page carry its own
+   crumbs. A phone has no room for a crumb trail and no pointer to aim at one, so the trail goes in
+   the menu instead and the button that opens it says where you are. That is the one thing this bar
+   carries that the web's does not, and it is why the button is the width of the bar: it is the
+   whole of the navigation, at the end a thumb reaches. */
 
 export type NavItem = { label: string; current?: boolean; onPress?: () => void };
 
 export function Bar({
+  where,
   items = [],
   actions,
   onBrand,
-  label = 'Sections',
   menuLabel = 'Menu',
 }: {
+  /** what the menu button says, and the rows the menu opens with */
+  where?: { label: string; items?: MenuItem[] };
+  /** the sections, as the web's nav holds them */
   items?: NavItem[];
   /** sign in, an account menu */
   actions?: ReactNode;
   onBrand?: () => void;
-  label?: string;
   menuLabel?: string;
 }) {
   const { t } = useTheme();
   const edge = useBarInsets();
-  const here = items.find((item) => item.current);
+
+  const rows: MenuItem[] = [
+    ...(where?.items ?? []),
+    ...items.map<MenuItem>((item, i) => ({
+      label: item.label,
+      onPress: item.onPress,
+      checked: item.current,
+      group: i === 0 ? 'Sections' : undefined,
+    })),
+  ];
 
   return (
     <View
@@ -73,43 +86,38 @@ export function Bar({
           <Seal size={space[24]} decorative />
         </Press>
 
-        {/* where you are, since the links themselves are in the menu */}
-        {here ? (
-          <Text kind="small" style={{ flex: 1, fontFamily: face.medium }} numberOfLines={1}>
-            {here.label}
-          </Text>
-        ) : (
-          <View style={{ flex: 1 }} />
-        )}
-
-        {actions}
-
-        {items.length ? (
+        {rows.length ? (
           <Menu
             label={menuLabel}
-            items={items.map<MenuItem>((item) => ({ label: item.label, onPress: item.onPress }))}
+            items={rows}
             trigger={(open) => (
               <Press
                 accessibilityRole="button"
-                accessibilityLabel={label}
+                accessibilityLabel={`${menuLabel}: ${where?.label ?? ''}`.trim()}
                 onPress={open}
                 rest="transparent"
                 down={t.bg.pressed}
+                grow
                 style={{
-                  width: control.md,
                   height: control.md,
-                  alignItems: 'center',
                   justifyContent: 'center',
+                  paddingHorizontal: space[16],
                   borderRadius: radius,
                   borderWidth: 0.5,
                   borderColor: t.border.control,
                 }}
               >
-                <IconMore size={18} />
+                <Text kind="small" numberOfLines={1} style={{ fontFamily: face.medium }}>
+                  {where?.label ?? menuLabel}
+                </Text>
               </Press>
             )}
           />
-        ) : null}
+        ) : (
+          <View style={{ flex: 1 }} />
+        )}
+
+        {actions}
       </View>
     </View>
   );

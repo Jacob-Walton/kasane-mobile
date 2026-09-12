@@ -8,7 +8,6 @@ import {
   Text as RNText,
   View,
   useColorScheme,
-  type PressableProps,
   type TextProps,
   type ViewProps,
 } from 'react-native';
@@ -120,18 +119,14 @@ export function Chevron({
   );
 }
 
+/* .kb-panel: a surface and the one radius. No border: a panel is told from the page by its
+   ground, and its head is told from its body the same way. */
 export function Panel({ style, children, ...rest }: ViewProps) {
   const { t } = useTheme();
   return (
     <View
       style={[
-        {
-          backgroundColor: t.bg.surface,
-          borderRadius: radius,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: t.border.hairline,
-          overflow: 'hidden',
-        },
+        { backgroundColor: t.bg.surface, borderRadius: radius, overflow: 'hidden' },
         style,
       ]}
       {...rest}
@@ -141,54 +136,207 @@ export function Panel({ style, children, ...rest }: ViewProps) {
   );
 }
 
-/* A row in a list. The whole row is the target, which is why it is at least a control tall: a
-   phone is aimed at with a thumb. */
-export function Row({
+/** .kb-panel__head: a title line above the content */
+export function PanelHead({ children }: { children: ReactNode }) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: space[8],
+        paddingHorizontal: space[16],
+        paddingTop: space[16],
+        paddingBottom: space[8],
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+/** .kb-panel__body: the short top padding assumes a head above it */
+export function PanelBody({ children, lone }: { children: ReactNode; lone?: boolean }) {
+  return (
+    <View
+      style={{
+        gap: space[16],
+        paddingHorizontal: space[16],
+        paddingTop: lone ? space[16] : 0,
+        paddingBottom: space[16],
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+/* .kb-collection and .kb-item: the item is the unit and the page is its container. No panel wraps
+   the list, no rule separates the items, and the gap is the only separator. This is what the web
+   client uses for a list of repositories and a list of issues.
+
+   .kb-listing, the one with a rule between its rows, is for a table. */
+export function Collection({ children, gap = space[16] }: { children: ReactNode; gap?: number }) {
+  return <View style={{ gap }}>{children}</View>;
+}
+
+export function Item({
   title,
-  note,
-  meta,
+  owner,
+  aside,
+  marks,
+  text,
   onPress,
-  last,
-  ...rest
 }: {
   title: string;
-  note?: string;
-  meta?: string;
+  /** shown muted before the title, as the web does with owner/name */
+  owner?: string;
+  /** the figures at the far end of the title row */
+  aside?: ReactNode;
+  /** the words that qualify the title, on their own line */
+  marks?: ReactNode;
+  text?: string;
   onPress?: () => void;
-  last?: boolean;
-} & Omit<PressableProps, 'style' | 'children'>) {
-  const { t } = useTheme();
+}) {
+  const { t, size, line } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      {...rest}
       style={({ pressed }) => ({
-        minHeight: control.md,
-        paddingVertical: space[12],
-        paddingHorizontal: space[16],
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: space[12],
-        backgroundColor: pressed ? t.bg.raised : 'transparent',
-        borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth,
-        borderBottomColor: t.border.hairline,
+        gap: space[8],
+        padding: space[16],
+        backgroundColor: pressed ? t.bg.raised : t.bg.tile,
+        borderRadius: radius,
       })}
     >
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text numberOfLines={2}>{title}</Text>
-        {note ? (
-          <Text kind="small" muted numberOfLines={1}>
-            {note}
-          </Text>
-        ) : null}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: space[8],
+        }}
+      >
+        <RNText
+          numberOfLines={2}
+          style={{
+            flexShrink: 1,
+            color: t.fg.default,
+            fontSize: size('18'),
+            lineHeight: line('18'),
+            fontFamily: face.semibold,
+            letterSpacing: size('18') * -0.01,
+          }}
+        >
+          {owner ? <RNText style={{ color: t.fg.secondary }}>{owner}</RNText> : null}
+          {title}
+        </RNText>
+        {aside}
       </View>
-      {meta ? (
-        <Text kind="small" muted>
-          {meta}
-        </Text>
-      ) : null}
+      {marks}
+      {text ? <ItemText>{text}</ItemText> : null}
     </Pressable>
+  );
+}
+
+/** .kb-item__text: the description under an item, secondary and one step down */
+export function ItemText({ children }: { children: string }) {
+  const { t, size, line } = useTheme();
+  return (
+    <RNText
+      numberOfLines={3}
+      style={{
+        color: t.fg.secondary,
+        fontSize: size('14'),
+        lineHeight: line('14'),
+        fontFamily: face.regular,
+      }}
+    >
+      {children}
+    </RNText>
+  );
+}
+
+/** the muted line of facts at the end of an item title row. .kb-cluster--wide holds them apart. */
+export function Meta({ children }: { children: ReactNode }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[24] }}>{children}</View>
+  );
+}
+
+/** .kb-cluster: the words that qualify a title, on their own line */
+export function Marks({ children, tight }: { children: ReactNode; tight?: boolean }) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: tight ? space[4] : space[8],
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+/* .kb-empty: a dashed box where a list would be, since an empty list and a list that failed to
+   load are not the same thing and should not look the same. */
+export function Empty({ children }: { children: string }) {
+  const { t, size } = useTheme();
+  return (
+    <View
+      style={{
+        alignItems: 'center',
+        gap: space[8],
+        paddingVertical: space[48],
+        paddingHorizontal: space[24],
+        borderWidth: 2,
+        borderStyle: 'dashed',
+        borderColor: t.border.control,
+        borderRadius: radius,
+      }}
+    >
+      <RNText
+        style={{
+          color: t.fg.secondary,
+          fontSize: size('14'),
+          fontFamily: face.regular,
+          textAlign: 'center',
+        }}
+      >
+        {children}
+      </RNText>
+    </View>
+  );
+}
+
+/* .kb-head: what the page is, and one fact about it. 40 on the web; a phone takes the compact
+   remap, which is 24. */
+export function Head({ title, aside }: { title: string; aside?: string }) {
+  const { t, size, line } = useTheme();
+  return (
+    <View style={{ gap: space[4], marginBottom: space[8] }}>
+      <RNText
+        style={{
+          color: t.fg.default,
+          fontSize: size('24'),
+          lineHeight: line('24'),
+          fontFamily: face.semibold,
+          letterSpacing: size('24') * -0.02,
+        }}
+      >
+        {title}
+      </RNText>
+      {aside ? (
+        <RNText
+          style={{ color: t.fg.secondary, fontSize: size('16'), fontFamily: face.regular }}
+        >
+          {aside}
+        </RNText>
+      ) : null}
+    </View>
   );
 }
 
@@ -200,15 +348,18 @@ export function Tray({
   value,
   options,
   onChange,
+  label,
 }: {
   value: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; count?: number }[];
   onChange: (value: string) => void;
+  label?: string;
 }) {
   const { t, size } = useTheme();
   return (
     <View
       accessibilityRole="tablist"
+      accessibilityLabel={label}
       style={{
         flexDirection: 'row',
         gap: space[4],
@@ -240,15 +391,30 @@ export function Tray({
                   : 'transparent',
             })}
           >
-            <RNText
-              style={{
-                color: on ? t.fg.onFill : t.fg.default,
-                fontSize: size('14'),
-                fontFamily: face.medium,
-              }}
-            >
-              {option.label}
-            </RNText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[8] }}>
+              <RNText
+                style={{
+                  color: on ? t.fg.onFill : t.fg.default,
+                  fontSize: size('14'),
+                  fontFamily: face.medium,
+                }}
+              >
+                {option.label}
+              </RNText>
+              {option.count === undefined ? null : (
+                <RNText
+                  style={{
+                    color: on ? t.fg.onFill : t.fg.secondary,
+                    opacity: on ? 0.8 : 1,
+                    fontSize: size('14'),
+                    fontFamily: face.regular,
+                    fontVariant: ['tabular-nums'],
+                  }}
+                >
+                  {option.count}
+                </RNText>
+              )}
+            </View>
           </Pressable>
         );
       })}
@@ -307,13 +473,15 @@ export function Waiting({ style }: { style?: ViewProps['style'] }) {
    hairline all round, the one radius, the bar shadow, and 8 of padding. The web pins it 16 below
    the top and centres it; here the 16 is measured from the safe area the OS reports.
 
-   The title is .kb-bar__name: 16 and semibold. A 20 heading is a navigation bar's size, not ours. */
+   What it carries is .kb-bar__brand: the instance, at 16 and semibold. Not the page title. The web
+   keeps one bar across every page and lets each page say what it is in its own Head; a phone that
+   writes the page name twice reads as a navigation bar. */
 export function Bar({
-  title,
+  title = 'Kurobeni',
   onBack,
   action,
 }: {
-  title: string;
+  title?: string;
   onBack?: () => void;
   action?: ReactNode;
 }) {
@@ -388,50 +556,6 @@ export function useBarInset() {
   return insets.top + space[16] + (control.md + space[8] * 2) + space[16];
 }
 
-/* A refresh the bar can hold, since pull to refresh is the platform's control and its spinner. */
-export function Refresh({ busy, onPress }: { busy: boolean; onPress: () => void }) {
-  const { t } = useTheme();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Refresh"
-      accessibilityState={{ busy }}
-      onPress={onPress}
-      disabled={busy}
-      style={({ pressed }) => ({
-        width: control.md,
-        height: control.md,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: radius,
-        backgroundColor: pressed ? t.bg.pressed : 'transparent',
-      })}
-    >
-      {busy ? <Spinner step="16" /> : <Arrows />}
-    </Pressable>
-  );
-}
-
-/* The same ring as .kb-spin, standing still. Kasane has no refresh glyph, and a ring with a gap in
-   it is the shape the system already uses for work in progress. */
-function Arrows() {
-  const { t, size } = useTheme();
-  const edge = size('18');
-  return (
-    <View
-      style={{
-        width: edge,
-        height: edge,
-        borderRadius: edge / 2,
-        borderWidth: 2,
-        borderColor: t.fg.default,
-        borderTopColor: 'transparent',
-        transform: [{ rotate: '45deg' }],
-      }}
-    />
-  );
-}
-
 export function Failed({
   error,
   onRetry,
@@ -480,6 +604,23 @@ export function Count({ children }: { children: string | number }) {
         fontSize: size('14'),
         fontFamily: face.regular,
         fontVariant: ['tabular-nums'],
+      }}
+    >
+      {children}
+    </RNText>
+  );
+}
+
+/** one of the facts in a Meta line: small, secondary, and tabular when it is a number */
+export function Fact({ children, num }: { children: ReactNode; num?: boolean }) {
+  const { t, size } = useTheme();
+  return (
+    <RNText
+      style={{
+        color: t.fg.secondary,
+        fontSize: size('14'),
+        fontFamily: face.regular,
+        fontVariant: num ? ['tabular-nums'] : undefined,
       }}
     >
       {children}

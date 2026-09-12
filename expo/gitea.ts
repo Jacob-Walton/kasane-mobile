@@ -13,6 +13,10 @@ export type Repo = {
   stars_count: number;
   open_issues_count: number;
   updated_at: string;
+  fork: boolean;
+  archived: boolean;
+  mirror: boolean;
+  template: boolean;
 };
 
 export type Issue = {

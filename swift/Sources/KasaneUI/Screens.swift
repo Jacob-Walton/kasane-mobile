@@ -71,7 +71,7 @@
             .padding(Kasane.Space.s16)
             .padding(.top, barInset)
           }
-          Bar("Repositories") { Refresh() }
+          Bar()
         }
       }
     }
@@ -125,7 +125,7 @@
             .padding(Kasane.Space.s16)
             .padding(.top, barInset)
           }
-          Bar("#4", back: {}) { Refresh() }
+          Bar(back: {})
         }
       }
     }

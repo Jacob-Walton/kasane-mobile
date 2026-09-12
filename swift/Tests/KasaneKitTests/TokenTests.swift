@@ -4,10 +4,10 @@ import Testing
 // The tokens are generated, so these check the rules the generator is meant to hold to.
 
 @Test func controlsClearTheMobileFloor() {
-  // iOS asks 44, Android 48. The web ladder of 32 and 40 is under both.
-  #expect(Kasane.Control.sm >= 44)
-  #expect(Kasane.Control.md >= 48)
-  #expect(Kasane.Control.lg > Kasane.Control.md)
+  // the same three heights as the web. Density never reaches a control, and 32 already clears the
+  // WCAG 2.5.8 floor of 24.
+  #expect([Kasane.Control.sm, Kasane.Control.md, Kasane.Control.lg] == [32, 40, 48])
+  #expect(Kasane.Control.sm >= 24)
 }
 
 @Test func oneRadius() {

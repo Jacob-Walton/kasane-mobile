@@ -116,8 +116,6 @@
             Chevron()
             Chevron(facing: .trailing)
             Spinner()
-            Arrows()
-            Refresh()
           }
           .frame(height: Kasane.Control.md)
 

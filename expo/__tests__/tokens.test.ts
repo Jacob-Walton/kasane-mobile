@@ -3,10 +3,11 @@ import { control, dark, light, radius, type as ladder } from '../theme';
 /* The same rules the Swift package asserts, on the same generated values. A token file that drifts
    from the platform floors is the failure this catches. */
 
-test('a control clears both platform floors', () => {
-  expect(control.sm).toBeGreaterThanOrEqual(44);
-  expect(control.md).toBeGreaterThanOrEqual(48);
-  expect(control.lg).toBeGreaterThan(control.md);
+/* The same three heights as the web. Density never reaches a control, on either platform, and 32
+   already clears the WCAG 2.5.8 floor of 24. */
+test('a control is one of the three heights', () => {
+  expect([control.sm, control.md, control.lg]).toEqual([32, 40, 48]);
+  expect(control.sm).toBeGreaterThanOrEqual(24);
 });
 
 test('one radius', () => {

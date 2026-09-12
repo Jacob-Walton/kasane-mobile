@@ -236,50 +236,6 @@
     }
   }
 
-  /// The same ring as .kb-spin, standing still. Kasane has no refresh glyph, and a ring with a gap
-  /// in it is the shape the system already uses for work in progress.
-  public struct Arrows: View {
-    @Environment(\.kasane) private var k
-    var step: Step = .body
-
-    public init(step: Step = .body) { self.step = step }
-
-    public var body: some View {
-      let edge = step.token.size + 2
-      return Circle()
-        .trim(from: 0, to: 0.75)
-        .stroke(k.fg, style: StrokeStyle(lineWidth: 2, lineCap: .butt))
-        .frame(width: edge, height: edge)
-        .rotationEffect(.degrees(45))
-        .accessibilityHidden(true)
-    }
-  }
-
-  /// A refresh the bar can hold, since pull to refresh is the platform's control and its spinner.
-  public struct Refresh: View {
-    @Environment(\.kasane) private var k
-    let busy: Bool
-    var action: () -> Void = {}
-
-    public init(busy: Bool = false, action: @escaping () -> Void = {}) {
-      self.busy = busy
-      self.action = action
-    }
-
-    public var body: some View {
-      Button(action: action) {
-        Group {
-          if busy { Spinner(step: .body) } else { Arrows() }
-        }
-        .frame(width: Kasane.Control.md, height: Kasane.Control.md)
-        .contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
-      .disabled(busy)
-      .accessibilityLabel("Refresh")
-    }
-  }
-
   /// .kb-spin: a 2px ring in the current ink with its top edge cleared, turning in 700ms. Not
   /// ProgressView, which brings the platform own look with it.
   public struct Spinner: View {
@@ -306,14 +262,17 @@
   /// hairline all round, the one radius, the bar shadow, and 8 of padding. The web pins it 16 below
   /// the top and centres it; on a phone the 16 is measured from the safe area instead.
   ///
-  /// The title is .kb-bar__name: 16 and semibold. A 20 heading is a navigation bar size.
+  /// What it carries is .kb-bar__brand: the instance, at 16 and semibold. Not the page title. The
+  /// web keeps one bar across every page and lets each page say what it is in its own Head.
   public struct Bar<Action: View>: View {
     @Environment(\.kasane) private var k
     let title: String
     var back: (() -> Void)?
     private let action: Action
 
-    public init(_ title: String, back: (() -> Void)? = nil, @ViewBuilder action: () -> Action) {
+    public init(
+      _ title: String = "Kurobeni", back: (() -> Void)? = nil, @ViewBuilder action: () -> Action
+    ) {
       self.title = title
       self.back = back
       self.action = action()
@@ -356,7 +315,7 @@
   }
 
   public extension Bar where Action == EmptyView {
-    init(_ title: String, back: (() -> Void)? = nil) {
+    init(_ title: String = "Kurobeni", back: (() -> Void)? = nil) {
       self.init(title, back: back) { EmptyView() }
     }
   }

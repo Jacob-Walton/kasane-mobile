@@ -1,10 +1,14 @@
 import { render, userEvent } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Bar, Failed, Refresh, Row, Tray } from '../ui';
-import { control } from '../theme';
+import { Bar, Empty, Failed, Item, Tray } from '../ui';
 
-/* A phone tells the app its insets. Off a phone nothing does, so the bar's tests name a frame. */
+/* These render. A token that stops reaching a part, or an item that stops being one target, shows
+   up here and not on a phone.
+
+   render is async in this version of the library, so every one of these awaits it. */
+
+/* A phone tells the app its insets. Off a phone nothing does, so the bar tests name a frame. */
 const Framed = ({ children }: { children: ReactNode }) => (
   <SafeAreaProvider
     initialMetrics={{
@@ -16,40 +20,41 @@ const Framed = ({ children }: { children: ReactNode }) => (
   </SafeAreaProvider>
 );
 
-/* These render. A token that stops reaching a control, or a row that stops being one target, shows
-   up here and not on a phone.
-
-   render is async in this version of the library, so every one of these awaits it. */
-
-test('a row is one target and reads its title and note', async () => {
+test('an item is one target and reads its title, owner and text', async () => {
   const onPress = jest.fn();
-  const view = await render(<Row title="feat: mvcc" note="#4 · jacob" meta="2" onPress={onPress} />);
+  const view = await render(
+    <Item owner="jacob/" title="kurobeni" text="Kasane, the design system" onPress={onPress} />,
+  );
 
-  expect(view.getByText('feat: mvcc')).toBeTruthy();
-  expect(view.getByText('#4 · jacob')).toBeTruthy();
+  // the owner is part of the title line, muted, the way the web client writes owner/name
+  expect(view.getByText('jacob/kurobeni')).toBeTruthy();
+  expect(view.getByText('Kasane, the design system')).toBeTruthy();
 
-  // the whole row, not the title: a thumb is aimed at the row
-  const target = view.getByRole('button');
-  await userEvent.press(target);
+  // the whole item, not the title: a thumb is aimed at the item
+  await userEvent.press(view.getByRole('button'));
   expect(onPress).toHaveBeenCalledTimes(1);
 });
 
-test('a row is at least a control tall', async () => {
-  const view = await render(<Row title="anything" onPress={() => {}} />);
+/* The one thing a collection must not grow: a rule between its items. Kasane keeps those for a
+   listing, which is a table. */
+test('an item carries no border', async () => {
+  const view = await render(<Item title="anything" onPress={() => {}} />);
   const style = view.getByRole('button').props.style;
   const flat = Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style;
-  expect(flat.minHeight).toBeGreaterThanOrEqual(control.md);
+  expect(flat.borderBottomWidth).toBeUndefined();
+  expect(flat.borderWidth).toBeUndefined();
 });
 
-test('a tray item says whether it is the selected one', async () => {
+test('a tray item says whether it is the selected one, and carries its count apart', async () => {
   const onChange = jest.fn();
   const view = await render(
     <Tray
       value="open"
       onChange={onChange}
+      label="Issue state"
       options={[
-        { value: 'open', label: 'Open' },
-        { value: 'closed', label: 'Closed' },
+        { value: 'open', label: 'Open', count: 3 },
+        { value: 'closed', label: 'Closed', count: 0 },
       ]}
     />,
   );
@@ -59,16 +64,24 @@ test('a tray item says whether it is the selected one', async () => {
   expect(tabs[0].props.accessibilityState.selected).toBe(true);
   expect(tabs[1].props.accessibilityState.selected).toBe(false);
 
+  // the count is its own text, never written into the label
+  expect(view.getByText('Open')).toBeTruthy();
+  expect(view.getByText('3')).toBeTruthy();
+
   await userEvent.press(tabs[1]);
   expect(onChange).toHaveBeenCalledWith('closed');
 });
 
-test('a failure says what went wrong and offers another go', async () => {
+/* An empty list and a list that failed are not the same thing and do not look the same. */
+test('an empty collection says so, and a failure says what went wrong', async () => {
+  const empty = await render(<Empty>No results found.</Empty>);
+  expect(empty.getByText('No results found.')).toBeTruthy();
+
   const onRetry = jest.fn();
-  const view = await render(<Failed error={new Error('502 upstream')} onRetry={onRetry} />);
-  expect(view.getByText('Could not load')).toBeTruthy();
-  expect(view.getByText('502 upstream')).toBeTruthy();
-  await userEvent.press(view.getByText('Try again'));
+  const bad = await render(<Failed error={new Error('502 upstream')} onRetry={onRetry} />);
+  expect(bad.getByText('Could not load')).toBeTruthy();
+  expect(bad.getByText('502 upstream')).toBeTruthy();
+  await userEvent.press(bad.getByText('Try again'));
   expect(onRetry).toHaveBeenCalled();
 });
 
@@ -85,14 +98,4 @@ test('the bar draws its own back control and title', async () => {
 test('the bar has no back control on the first screen', async () => {
   const view = await render(<Bar title="Repositories" />, { wrapper: Framed });
   expect(view.queryByLabelText('Back')).toBeNull();
-});
-
-/* Refresh replaces pull to refresh, so it has to say it is busy and stop taking presses. */
-test('a busy refresh takes no presses', async () => {
-  const onPress = jest.fn();
-  const view = await render(<Refresh busy onPress={onPress} />);
-  const target = view.getByLabelText('Refresh');
-  expect(target.props.accessibilityState.busy).toBe(true);
-  await userEvent.press(target);
-  expect(onPress).not.toHaveBeenCalled();
 });

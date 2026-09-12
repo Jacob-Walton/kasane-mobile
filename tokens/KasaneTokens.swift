@@ -3,11 +3,11 @@
 import Foundation
 
 public enum Kasane {
-  /// Control heights. Taller than the web: iOS asks for 44pt as a minimum.
+  /// Control heights. The same three as the web.
   public enum Control {
-    public static let sm: Double = 44
-    public static let md: Double = 48
-    public static let lg: Double = 56
+    public static let sm: Double = 32
+    public static let md: Double = 40
+    public static let lg: Double = 48
   }
 
   /// The one radius. A control at any of the three heights becomes a pill.
@@ -27,8 +27,25 @@ public enum Kasane {
     public static let bar = Shadow(x: 0, y: 8, blur: 32, colour: "#221a1e", opacity: 0.16)
   }
 
-  /// The space ladder, in points.
+  /// The space ladder, in points, remapped the way data-kb-density=compact remaps it. A phone is
+  /// always the compact case.
   public enum Space {
+    public static let s4: Double = 4
+    public static let s8: Double = 8
+    public static let s12: Double = 12
+    public static let s16: Double = 12
+    public static let s24: Double = 16
+    public static let s32: Double = 24
+    public static let s40: Double = 40
+    public static let s48: Double = 32
+    public static let s64: Double = 48
+    public static let s96: Double = 64
+    public static let s128: Double = 128
+    public static let s160: Double = 160
+  }
+
+  /// The ladder as the web writes it, for anything that has to match a desktop measurement.
+  public enum Room {
     public static let s4: Double = 4
     public static let s8: Double = 8
     public static let s12: Double = 12

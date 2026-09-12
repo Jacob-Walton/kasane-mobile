@@ -2,10 +2,10 @@
   "$comment": "Where the mobile halves depart from Kasane. Kurobeni keeps the same file for the web. A part that is not listed here has to match its .kb-* rule.",
   "deviations": [
     {
-      "id": "controls-are-taller",
-      "what": "Control heights are 44, 48 and 56, not the web's 32, 40 and 48.",
-      "why": "The pointer is a finger. Apple asks for 44pt and Google for 48dp, and both of Kasane's lower rungs are under that.",
-      "where": "tokens/generate.mjs, the control map",
+      "id": "density-is-always-compact",
+      "what": "The space ladder is the compact remap: 16 is 12, 24 is 16, 32 is 24, 48 is 32, 64 is 48 and 96 is 64. The unremapped ladder is exported as room.",
+      "why": "The web turns data-kb-density=compact on itself under 768, and a phone is never the other case. Controls are untouched, which is the rule the web keeps too.",
+      "where": "tokens/generate.mjs, the REMAP map",
       "themes": "both"
     },
     {
@@ -32,7 +32,7 @@
     {
       "id": "bar-is-measured-from-the-safe-area",
       "what": "The bar sits 16 below the safe area rather than 16 below the top of the viewport, and spans the width less 16 each side instead of fitting its content.",
-      "why": "A phone has a status bar and a notch in the 16 the web can spend, and a title with a back control and an action fills the width anyway.",
+      "why": "A phone has a status bar and a notch in the 16 the web can spend, and a brand with a back control and an action fills the width anyway.",
       "where": ".kb-bar",
       "themes": "both"
     },
@@ -40,14 +40,21 @@
       "id": "no-hover-state",
       "what": "Every :hover rule is dropped; the :active rule is what a press shows.",
       "why": "There is no pointer to hover with. A finger arrives already pressing.",
-      "where": ".kb-btn, .kb-tray, .kb-listing__row",
+      "where": ".kb-btn, .kb-tray, .kb-item",
       "themes": "both"
     },
     {
-      "id": "prose-padding-is-one-rung-down",
-      "what": "A quote and a code block take 16 of padding, not 24 and 32.",
-      "why": "The same reason data-kb-density=compact exists on the web: a phone column cannot spend 32 a side and still hold a line of text.",
-      "where": ".kb-prose blockquote, .kb-prose pre",
+      "id": "no-refresh-control",
+      "what": "There is no refresh control and no pull to refresh.",
+      "why": "The web has neither. A query refetches when a screen mounts and when the connection returns, which is what a page load does on the web.",
+      "where": "the bar",
+      "themes": "both"
+    },
+    {
+      "id": "head-title-is-24",
+      "what": "A page head is 24, not 40.",
+      "why": "This is the compact remap the web already applies to .kb-head__title under 768.",
+      "where": ".kb-head__title",
       "themes": "both"
     }
   ]

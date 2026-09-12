@@ -7,7 +7,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/ibm-plex-sans';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Stack } from 'expo-router';
+import { DefaultTheme, Stack, ThemeProvider, type Theme } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -43,20 +43,42 @@ export default function Layout() {
     [],
   );
 
+  /* The navigator paints its own ground behind and between the cards, and the colour it reaches for
+     is the navigation default, which is near white. That is the white at the edges while a screen
+     pushes in. Every one of these is a Kasane colour instead. */
+  const ground: Theme = useMemo(
+    () => ({
+      ...DefaultTheme,
+      dark,
+      colors: {
+        ...DefaultTheme.colors,
+        background: t.bg.page,
+        card: t.bg.page,
+        border: t.border.hairline,
+        text: t.fg.default,
+        primary: t.accent.default,
+        notification: t.accent.default,
+      },
+    }),
+    [dark, t],
+  );
+
   // nothing is drawn in a face we did not choose, so nothing is drawn until the faces are in
   if (!ready) return null;
 
   return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+    <SafeAreaProvider style={{ backgroundColor: t.bg.page }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: t.bg.page }}>
         <QueryClientProvider client={client}>
-          <StatusBar style={dark ? 'light' : 'dark'} />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: t.bg.page },
-            }}
-          />
+          <ThemeProvider value={ground}>
+            <StatusBar style={dark ? 'light' : 'dark'} />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: t.bg.page },
+              }}
+            />
+          </ThemeProvider>
         </QueryClientProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>

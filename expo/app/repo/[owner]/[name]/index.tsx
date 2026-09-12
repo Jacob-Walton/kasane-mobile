@@ -1,23 +1,30 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList } from 'react-native';
 import * as api from '../../../../gitea';
 import {
   Bar,
+  Empty,
   Failed,
-  Panel,
-  Refresh,
-  Row,
-  Text,
+  Head,
+  Item,
+  Marks,
+  Meta,
+  Fact,
+  Status,
   Tray,
   Waiting,
   space,
   useBarInset,
 } from '../../../../ui';
 
-/* One repository's issues and pulls. The two are one list on the instance, told apart by whether
-   an entry carries a pull request, which is why the filter is here and not in the query. */
+/* One repository: its issues and its pulls. Two trays, the sections and then the state, which is
+   the pair the web client draws on this page. The counts sit inside the tray items rather than
+   being written into the labels.
+
+   The instance keeps issues and pulls in one list, told apart by whether an entry carries a pull
+   request, which is why the filter is here and not in the query. */
 
 type Kind = 'issues' | 'pulls';
 type State = 'open' | 'closed';
@@ -36,81 +43,88 @@ export default function Issues() {
   const rows = all.filter(
     (i) => (kind === 'pulls' ? !!i.pull_request : !i.pull_request) && i.state === state,
   );
-  const count = (k: Kind, s: State) =>
-    all.filter((i) => (k === 'pulls' ? !!i.pull_request : !i.pull_request) && i.state === s).length;
+  const count = (k: Kind, st: State) =>
+    all.filter((i) => (k === 'pulls' ? !!i.pull_request : !i.pull_request) && i.state === st).length;
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={{ flex: 1 }}>
-        <View style={{ padding: space[16], paddingTop: top, gap: space[8] }}>
-          <Tray
-            value={kind}
-            onChange={(v) => setKind(v as Kind)}
-            options={[
-              { value: 'issues', label: `Issues ${count('issues', state)}` },
-              { value: 'pulls', label: `Pulls ${count('pulls', state)}` },
-            ]}
-          />
-          <Tray
-            value={state}
-            onChange={(v) => setState(v as State)}
-            options={[
-              { value: 'open', label: 'Open' },
-              { value: 'closed', label: 'Closed' },
-            ]}
-          />
-        </View>
-
-        {q.isPending ? (
-          <Waiting />
-        ) : q.isError ? (
-          <Failed error={q.error} onRetry={q.refetch} />
-        ) : (
-          <FlatList
-            data={rows}
-            keyExtractor={(issue) => String(issue.id)}
-            contentContainerStyle={{ paddingHorizontal: space[16], paddingBottom: space[48] }}
-            renderItem={({ item, index }) => (
-              <Panel
-                style={{
-                  borderTopLeftRadius: index === 0 ? undefined : 0,
-                  borderTopRightRadius: index === 0 ? undefined : 0,
-                  borderBottomLeftRadius: index === rows.length - 1 ? undefined : 0,
-                  borderBottomRightRadius: index === rows.length - 1 ? undefined : 0,
-                  borderTopWidth: index === 0 ? undefined : 0,
-                }}
-              >
-                <Link
-                  href={{
-                    pathname: '/repo/[owner]/[name]/[number]',
-                    params: { owner, name, number: item.number },
-                  }}
-                  asChild
-                >
-                  <Row
-                    title={item.title}
-                    note={`#${item.number} · ${item.user.login} · ${api.ago(item.created_at)}`}
-                    meta={item.comments ? `${item.comments}` : undefined}
-                    last
-                  />
-                </Link>
-              </Panel>
-            )}
-            ListEmptyComponent={
-              <View style={{ paddingVertical: space[24] }}>
-                <Text muted>
-                  No {state} {kind} here.
-                </Text>
-              </View>
+    <>
+      <FlatList
+        data={rows}
+        keyExtractor={(issue) => String(issue.id)}
+        contentContainerStyle={{
+          padding: space[16],
+          paddingTop: top,
+          paddingBottom: space[48],
+          gap: space[16],
+        }}
+        ListHeaderComponent={
+          <>
+            <Head
+              title={kind === 'pulls' ? 'Pulls' : 'Issues'}
+              aside={`${count(kind, 'open') + count(kind, 'closed')} in ${full}`}
+            />
+            <Tray
+              label="Repository sections"
+              value={kind}
+              onChange={(v) => setKind(v as Kind)}
+              options={[
+                { value: 'issues', label: 'Issues', count: count('issues', 'open') },
+                { value: 'pulls', label: 'Pulls', count: count('pulls', 'open') },
+              ]}
+            />
+            <Tray
+              label={kind === 'pulls' ? 'Pull state' : 'Issue state'}
+              value={state}
+              onChange={(v) => setState(v as State)}
+              options={[
+                { value: 'open', label: 'Open', count: count(kind, 'open') },
+                { value: 'closed', label: 'Closed', count: count(kind, 'closed') },
+              ]}
+            />
+          </>
+        }
+        ListHeaderComponentStyle={{ gap: space[8], marginBottom: space[8] }}
+        ListEmptyComponent={
+          q.isPending ? (
+            <Waiting />
+          ) : q.isError ? (
+            <Failed error={q.error} onRetry={q.refetch} />
+          ) : (
+            <Empty>No results found.</Empty>
+          )
+        }
+        renderItem={({ item }) => (
+          <Item
+            title={item.title}
+            marks={
+              <Marks tight>
+                <Status
+                  label={item.state === 'open' ? 'Open' : 'Closed'}
+                  kind={item.state === 'open' ? 'ok' : 'neutral'}
+                />
+              </Marks>
+            }
+            aside={
+              <Meta>
+                <Fact num>#{item.number}</Fact>
+                {item.comments ? (
+                  <Fact>
+                    {item.comments} {item.comments === 1 ? 'comment' : 'comments'}
+                  </Fact>
+                ) : null}
+              </Meta>
+            }
+            text={`opened ${api.ago(item.created_at)} by ${item.user.login}`}
+            onPress={() =>
+              router.push({
+                pathname: '/repo/[owner]/[name]/[number]',
+                params: { owner, name, number: item.number },
+              })
             }
           />
         )}
-      </View>
-      <Bar
-        title={name}
-        onBack={router.back}
-        action={<Refresh busy={q.isRefetching} onPress={q.refetch} />}
       />
-    </View>
+      <Bar onBack={router.back} />
+    </>
   );
 }

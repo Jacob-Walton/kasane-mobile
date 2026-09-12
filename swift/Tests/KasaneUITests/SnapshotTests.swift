@@ -25,15 +25,17 @@
       return url
     }
 
+    /// A screen gets a height as well as a width: a scroll view offered an unbounded height lays
+    /// its content out to nothing, and the picture comes back as an empty ground.
     private func shoot(
-      _ name: String, width: CGFloat = 390, dark: Bool = false,
+      _ name: String, width: CGFloat = 390, height: CGFloat? = nil, dark: Bool = false,
       type: DynamicTypeSize = .large, @ViewBuilder _ view: () -> some View
     ) throws {
       let renderer = ImageRenderer(
         content: view()
           .environment(\.colorScheme, dark ? .dark : .light)
           .environment(\.dynamicTypeSize, type)
-          .frame(width: width)
+          .frame(width: width, height: height)
       )
       renderer.scale = 2
 
@@ -51,22 +53,25 @@
       print("snapshot \(file.path) \(image.width)x\(image.height)")
     }
 
+    // 844 is an iPhone 16's height in points, so a screen is drawn at the size it is read at
+    private let tall: CGFloat = 844
+
     func testRepos() throws {
-      try shoot("repos-light") { Repos() }
-      try shoot("repos-dark", dark: true) { Repos() }
+      try shoot("repos-light", height: tall) { Repos() }
+      try shoot("repos-dark", height: tall, dark: true) { Repos() }
     }
 
     func testIssue() throws {
-      try shoot("issue-light") { Issue() }
-      try shoot("issue-dark", dark: true) { Issue() }
+      try shoot("issue-light", height: tall) { Issue() }
+      try shoot("issue-dark", height: tall, dark: true) { Issue() }
     }
 
     /// The reader's text scale is the one setting that breaks a phone layout, so it gets a picture
     /// at both ends of the range.
     func testTextScale() throws {
-      try shoot("issue-small", type: .xSmall) { Issue() }
-      try shoot("issue-huge", type: .accessibility3) { Issue() }
-      try shoot("repos-huge", type: .accessibility3) { Repos() }
+      try shoot("issue-small", height: tall, type: .xSmall) { Issue() }
+      try shoot("issue-huge", height: tall, type: .accessibility3) { Issue() }
+      try shoot("repos-huge", height: tall, type: .accessibility3) { Repos() }
     }
 
     /// The kit on its own, so a part that breaks is visible without reading a screen for it.

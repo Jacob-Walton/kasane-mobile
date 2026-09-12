@@ -13,6 +13,20 @@ public enum Kasane {
   /// The one radius. A control at any of the three heights becomes a pill.
   public static let radius: Double = 24
 
+  /// A shadow, in the parts a platform takes. The web writes these as one box-shadow string.
+  public struct Shadow: Sendable {
+    public let x: Double
+    public let y: Double
+    public let blur: Double
+    public let colour: String
+    public let opacity: Double
+  }
+
+  public enum Shadows {
+    public static let raised = Shadow(x: 0, y: 16, blur: 48, colour: "#221a1e", opacity: 0.18)
+    public static let bar = Shadow(x: 0, y: 8, blur: 32, colour: "#221a1e", opacity: 0.16)
+  }
+
   /// The space ladder, in points.
   public enum Space {
     public static let s4: Double = 4

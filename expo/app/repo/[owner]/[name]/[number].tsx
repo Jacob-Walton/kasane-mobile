@@ -3,7 +3,18 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 import * as api from '../../../../gitea';
 import { Markdown } from '../../../../markdown';
-import { Bar, Button, Failed, Panel, Pill, Refresh, Text, Waiting, space } from '../../../../ui';
+import {
+  Bar,
+  Button,
+  Failed,
+  Panel,
+  Refresh,
+  Status,
+  Text,
+  Waiting,
+  space,
+  useBarInset,
+} from '../../../../ui';
 
 /* One issue: what it says, then what was said about it. */
 
@@ -16,6 +27,7 @@ export default function One() {
   const full = `${owner}/${name}`;
   const n = Number(number);
   const router = useRouter();
+  const top = useBarInset();
 
   const q = useQuery({
     queryKey: ['issue', full, n],
@@ -26,28 +38,28 @@ export default function One() {
   });
 
   return (
-    <>
-      <Bar
-        title={`#${number}`}
-        onBack={router.back}
-        action={<Refresh busy={q.isRefetching} onPress={q.refetch} />}
-      />
+    <View style={{ flex: 1 }}>
       {q.isPending ? (
-        <Waiting />
+        <Waiting style={{ paddingTop: top }} />
       ) : q.isError ? (
-        <Failed error={q.error} onRetry={q.refetch} />
+        <Failed error={q.error} onRetry={q.refetch} style={{ paddingTop: top }} />
       ) : (
         <ScrollView
-          contentContainerStyle={{ padding: space[16], gap: space[16], paddingBottom: space[64] }}
+          contentContainerStyle={{
+            padding: space[16],
+            paddingTop: top,
+            gap: space[16],
+            paddingBottom: space[64],
+          }}
         >
           <View style={{ gap: space[8] }}>
             <Text kind="title">{q.data.issue.title}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[8] }}>
-              <Pill
+              <Status
                 label={q.data.issue.state === 'open' ? 'Open' : 'Closed'}
                 kind={q.data.issue.state === 'open' ? 'ok' : 'neutral'}
               />
-              {q.data.issue.pull_request ? <Pill label="Pull request" /> : null}
+              {q.data.issue.pull_request ? <Status label="Pull request" /> : null}
               <Text kind="small" muted>
                 {q.data.issue.user.login} opened this {api.ago(q.data.issue.created_at)}
               </Text>
@@ -82,6 +94,11 @@ export default function One() {
           </Text>
         </ScrollView>
       )}
-    </>
+      <Bar
+        title={`#${number}`}
+        onBack={router.back}
+        action={<Refresh busy={q.isRefetching} onPress={q.refetch} />}
+      />
+    </View>
   );
 }

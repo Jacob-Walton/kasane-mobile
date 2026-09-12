@@ -1,0 +1,54 @@
+{
+  "$comment": "Where the mobile halves depart from Kasane. Kurobeni keeps the same file for the web. A part that is not listed here has to match its .kb-* rule.",
+  "deviations": [
+    {
+      "id": "controls-are-taller",
+      "what": "Control heights are 44, 48 and 56, not the web's 32, 40 and 48.",
+      "why": "The pointer is a finger. Apple asks for 44pt and Google for 48dp, and both of Kasane's lower rungs are under that.",
+      "where": "tokens/generate.mjs, the control map",
+      "themes": "both"
+    },
+    {
+      "id": "type-is-a-base-size",
+      "what": "The type ladder is emitted as unscaled numbers instead of final sizes.",
+      "why": "Both platforms let the reader set a text scale, and a size the app fixes ignores it. Expo multiplies by the font scale, SwiftUI names the step to scale against.",
+      "where": "tokens/generate.mjs, the type map",
+      "themes": "both"
+    },
+    {
+      "id": "shadows-are-split-apart",
+      "what": "A shadow is emitted as x, y, blur, colour and opacity instead of one box-shadow string.",
+      "why": "Neither platform parses CSS. The values are the same ones.",
+      "where": "tokens/generate.mjs, the shadow map",
+      "themes": "both"
+    },
+    {
+      "id": "no-safe-area-token",
+      "what": "The safe area is not a token.",
+      "why": "It has no web equivalent and it is not a constant: the OS reports it, and it changes with the device and the orientation.",
+      "where": "expo/ui.tsx useBarInset, KasaneUI barInset",
+      "themes": "both"
+    },
+    {
+      "id": "bar-is-measured-from-the-safe-area",
+      "what": "The bar sits 16 below the safe area rather than 16 below the top of the viewport, and spans the width less 16 each side instead of fitting its content.",
+      "why": "A phone has a status bar and a notch in the 16 the web can spend, and a title with a back control and an action fills the width anyway.",
+      "where": ".kb-bar",
+      "themes": "both"
+    },
+    {
+      "id": "no-hover-state",
+      "what": "Every :hover rule is dropped; the :active rule is what a press shows.",
+      "why": "There is no pointer to hover with. A finger arrives already pressing.",
+      "where": ".kb-btn, .kb-tray, .kb-listing__row",
+      "themes": "both"
+    },
+    {
+      "id": "prose-padding-is-one-rung-down",
+      "what": "A quote and a code block take 16 of padding, not 24 and 32.",
+      "why": "The same reason data-kb-density=compact exists on the web: a phone column cannot spend 32 a side and still hold a line of text.",
+      "where": ".kb-prose blockquote, .kb-prose pre",
+      "themes": "both"
+    }
+  ]
+}

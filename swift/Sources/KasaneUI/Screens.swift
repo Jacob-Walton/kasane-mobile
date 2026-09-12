@@ -5,6 +5,11 @@
   // The two screens the Expo app has, in SwiftUI, on fixed content. Fixed because these are what CI
   // renders: a picture of a screen that fetched nothing is the only picture that is the same twice.
 
+  /// What a screen content clears to sit under the floating bar: the 16 above the bar, the bar
+  /// itself, and one more 16 under it. The safe area is not counted, since SwiftUI insets the
+  /// screen by it already.
+  let barInset = Kasane.Space.s16 + (Kasane.Control.md + Kasane.Space.s8 * 2) + Kasane.Space.s16
+
   /// Wraps a screen's content in a scroll view, or does not. ImageRenderer draws pure SwiftUI and a
   /// scroll view is bridged, so a snapshot of one comes back as bare ground: CI asks for false.
   @ViewBuilder
@@ -48,8 +53,7 @@
 
     public var body: some View {
       Kasaned {
-        VStack(spacing: 0) {
-          Bar("Repositories") { Refresh() }
+        ZStack(alignment: .top) {
           scrolling(scrolls) {
             VStack(alignment: .leading, spacing: Kasane.Space.s8) {
               KText("\(items.count) public repositories", step: .small, muted: true)
@@ -65,7 +69,9 @@
               }
             }
             .padding(Kasane.Space.s16)
+            .padding(.top, barInset)
           }
+          Bar("Repositories") { Refresh() }
         }
       }
     }
@@ -81,15 +87,14 @@
 
     public var body: some View {
       Kasaned {
-        VStack(spacing: 0) {
-          Bar("#4", back: {}) { Refresh() }
+        ZStack(alignment: .top) {
           scrolling(scrolls) {
             VStack(alignment: .leading, spacing: Kasane.Space.s16) {
               VStack(alignment: .leading, spacing: Kasane.Space.s8) {
                 KText("Parse rgba tokens in Colour", step: .title)
                 HStack(spacing: Kasane.Space.s8) {
-                  Pill("Open", kind: .ok)
-                  Pill("Pull request")
+                  Status("Open", kind: .ok)
+                  Status("Pull request")
                   KText("jacob opened this 2 days ago", step: .small, muted: true)
                 }
               }
@@ -118,7 +123,9 @@
               KText("Reading only: signing in is not built yet.", step: .small, muted: true)
             }
             .padding(Kasane.Space.s16)
+            .padding(.top, barInset)
           }
+          Bar("#4", back: {}) { Refresh() }
         }
       }
     }

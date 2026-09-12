@@ -29,6 +29,12 @@
     public var accent: Color { colour("accent.default") }
     public var ok: Color { colour("status.ok") }
     public var warn: Color { colour("status.warn") }
+
+    /// A shadow token carries its opacity in the rgba the web writes; here it is a separate part.
+    public func shadow(_ s: Kasane.Shadow) -> Color {
+      guard let c = Colour(token: s.colour) else { return Color.black.opacity(s.opacity) }
+      return Color(.sRGB, red: c.red, green: c.green, blue: c.blue, opacity: s.opacity)
+    }
   }
 
   struct PaletteKey: EnvironmentKey {

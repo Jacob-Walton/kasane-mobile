@@ -13,14 +13,15 @@ import {
   type ViewProps,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { control, dark, light, radius, space, type as ladder } from './theme';
+import { control, dark, light, radius, shadow, space, type as ladder } from './theme';
 
-/* The pieces every screen is built from. Nothing here holds a colour or a number: they all come
-   from theme.ts, which is generated from Kasane.
+/* The pieces every screen is built from. Every one of them is a Kasane rule, named above it, and
+   nothing here holds a colour or a number: they all come from theme.ts, generated from Kasane.
 
-   Two rules this file exists to keep. A type size is always multiplied by the reader's text scale,
-   so no size is final. A control is always one of the three heights, which here are 44, 48 and 56
-   rather than the web's 32, 40 and 48. */
+   Where a part has to differ on a phone it is written in deviations.json, next to the token
+   generator, with what it is and why. Two of those apply to everything here: a type size is always
+   multiplied by the reader's text scale, and a control is 44, 48 or 56 instead of the web's 32, 40
+   and 48. */
 
 export type Step = keyof typeof ladder;
 
@@ -191,9 +192,11 @@ export function Row({
   );
 }
 
-/* A row of choices. Kasane calls this a tray: one named group, the chosen one filled, so where you
-   are is not carried by colour alone. */
-export function Tabs({
+/* .kb-tray: a pill holding a segmented set, on the deepest ground step so it reads on the page and
+   on a panel alike. An unselected item is full ink on a transparent ground, and lifts to the
+   surface under the finger; the selected one is filled. Selection is instant, since a background
+   cross-fade takes the label through grey. */
+export function Tray({
   value,
   options,
   onChange,
@@ -228,12 +231,18 @@ export function Tabs({
               justifyContent: 'center',
               paddingHorizontal: space[16],
               borderRadius: radius,
-              backgroundColor: on ? t.fill.default : pressed ? t.bg.raised : 'transparent',
+              backgroundColor: on
+                ? pressed
+                  ? t.fill.active
+                  : t.fill.default
+                : pressed
+                  ? t.bg.surface
+                  : 'transparent',
             })}
           >
             <RNText
               style={{
-                color: on ? t.fg.onFill : t.fg.secondary,
+                color: on ? t.fg.onFill : t.fg.default,
                 fontSize: size('14'),
                 fontFamily: face.medium,
               }}
@@ -247,8 +256,8 @@ export function Tabs({
   );
 }
 
-/* Our own spinner. ActivityIndicator is the platform's, and it brings the platform's look with it:
-   a ring with one lit quarter, turning, is the same information and ours. */
+/* .kb-spin: a 2px ring in the current ink with its top edge cleared, turning in 700ms. Not
+   ActivityIndicator, which brings the platform's look with it. */
 export function Spinner({ step = '20' }: { step?: Step }) {
   const { t, size } = useTheme();
   // useMemo, not useRef: the value is read while the style is built, which is render
@@ -259,7 +268,7 @@ export function Spinner({ step = '20' }: { step?: Step }) {
     const spin = Animated.loop(
       Animated.timing(turn, {
         toValue: 1,
-        duration: 900,
+        duration: 700,
         easing: Easing.linear,
         useNativeDriver: true,
       }),
@@ -275,9 +284,9 @@ export function Spinner({ step = '20' }: { step?: Step }) {
         width: edge,
         height: edge,
         borderRadius: edge / 2,
-        borderWidth: Math.max(2, edge / 8),
-        borderColor: t.border.hairline,
-        borderTopColor: t.fg.secondary,
+        borderWidth: 2,
+        borderColor: t.fg.secondary,
+        borderTopColor: 'transparent',
         transform: [
           { rotate: turn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) },
         ],
@@ -286,16 +295,19 @@ export function Spinner({ step = '20' }: { step?: Step }) {
   );
 }
 
-export function Waiting() {
+export function Waiting({ style }: { style?: ViewProps['style'] }) {
   return (
-    <View style={{ padding: space[48], alignItems: 'center' }}>
+    <View style={[{ padding: space[48], alignItems: 'center' }, style]}>
       <Spinner />
     </View>
   );
 }
 
-/* The bar. Not the platform's: a stack header brings its own type, its own chevron and its own
-   ground, none of which are ours. The inset is the only thing the OS supplies. */
+/* .kb-bar: a pill that floats over the page, not a strip across the top of it. Surface ground, a
+   hairline all round, the one radius, the bar shadow, and 8 of padding. The web pins it 16 below
+   the top and centres it; here the 16 is measured from the safe area the OS reports.
+
+   The title is .kb-bar__name: 16 and semibold. A 20 heading is a navigation bar's size, not ours. */
 export function Bar({
   title,
   onBack,
@@ -305,47 +317,75 @@ export function Bar({
   onBack?: () => void;
   action?: ReactNode;
 }) {
-  const { t } = useTheme();
+  const { t, size } = useTheme();
   const insets = useSafeAreaInsets();
   return (
     <View
+      pointerEvents="box-none"
       style={{
-        paddingTop: insets.top + space[8],
-        paddingBottom: space[8],
-        paddingHorizontal: space[8],
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: space[4],
-        backgroundColor: t.bg.page,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: t.border.hairline,
+        position: 'absolute',
+        top: insets.top + space[16],
+        left: space[16],
+        right: space[16],
       }}
     >
-      {onBack ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          onPress={onBack}
-          style={({ pressed }) => ({
-            width: control.md,
-            height: control.md,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: radius,
-            backgroundColor: pressed ? t.bg.pressed : 'transparent',
-          })}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: space[8],
+          padding: space[8],
+          backgroundColor: t.bg.surface,
+          borderRadius: radius,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: t.border.hairline,
+          shadowColor: shadow.bar.colour,
+          shadowOffset: { width: shadow.bar.x, height: shadow.bar.y },
+          shadowRadius: shadow.bar.blur / 2,
+          shadowOpacity: shadow.bar.opacity,
+          elevation: 8,
+        }}
+      >
+        {onBack ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            onPress={onBack}
+            style={({ pressed }) => ({
+              width: control.md,
+              height: control.md,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: radius,
+              backgroundColor: pressed ? t.bg.pressed : 'transparent',
+            })}
+          >
+            <Chevron />
+          </Pressable>
+        ) : null}
+        <RNText
+          numberOfLines={1}
+          style={{
+            flex: 1,
+            paddingLeft: onBack ? 0 : space[16],
+            color: t.fg.default,
+            fontSize: size('16'),
+            fontFamily: face.semibold,
+          }}
         >
-          <Chevron />
-        </Pressable>
-      ) : (
-        <View style={{ width: space[8] }} />
-      )}
-      <Text kind="heading" numberOfLines={1} style={{ flex: 1 }}>
-        {title}
-      </Text>
-      {action}
+          {title}
+        </RNText>
+        {action}
+      </View>
     </View>
   );
+}
+
+/* What a screen's own content has to clear to sit under the floating bar: the safe area, the 16
+   above the bar, the bar itself, and one more 16 under it. */
+export function useBarInset() {
+  const insets = useSafeAreaInsets();
+  return insets.top + space[16] + (control.md + space[8] * 2) + space[16];
 }
 
 /* A refresh the bar can hold, since pull to refresh is the platform's control and its spinner. */
@@ -372,8 +412,8 @@ export function Refresh({ busy, onPress }: { busy: boolean; onPress: () => void 
   );
 }
 
-/* Two arcs and two heads would be a drawing. One ring with a gap, and a mark on it, is enough to
-   read as refresh and needs no asset. */
+/* The same ring as .kb-spin, standing still. Kasane has no refresh glyph, and a ring with a gap in
+   it is the shape the system already uses for work in progress. */
 function Arrows() {
   const { t, size } = useTheme();
   const edge = size('18');
@@ -383,19 +423,27 @@ function Arrows() {
         width: edge,
         height: edge,
         borderRadius: edge / 2,
-        borderWidth: Math.max(2, edge / 8),
+        borderWidth: 2,
         borderColor: t.fg.default,
-        borderRightColor: 'transparent',
+        borderTopColor: 'transparent',
         transform: [{ rotate: '45deg' }],
       }}
     />
   );
 }
 
-export function Failed({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+export function Failed({
+  error,
+  onRetry,
+  style,
+}: {
+  error: unknown;
+  onRetry?: () => void;
+  style?: ViewProps['style'];
+}) {
   const message = error instanceof Error ? error.message : String(error);
   return (
-    <View style={{ padding: space[24], gap: space[12], alignItems: 'flex-start' }}>
+    <View style={[{ padding: space[24], gap: space[12], alignItems: 'flex-start' }, style]}>
       <Text strong>Could not load</Text>
       <Text kind="small" muted>
         {message}
@@ -405,25 +453,37 @@ export function Failed({ error, onRetry }: { error: unknown; onRetry?: () => voi
   );
 }
 
-export function Pill({ label, kind = 'neutral' }: { label: string; kind?: 'neutral' | 'ok' | 'warn' }) {
+/* .kb-status: a state is coloured text at 14 and medium, with no chip around it. An outlined badge
+   is not in Kasane. */
+export function Status({ label, kind = 'neutral' }: { label: string; kind?: 'neutral' | 'ok' | 'warn' | 'err' }) {
   const { t, size } = useTheme();
-  const ground =
-    kind === 'ok' ? t.status.ok : kind === 'warn' ? t.status.warn : t.border.control;
+  const ink =
+    kind === 'ok'
+      ? t.status.ok
+      : kind === 'warn'
+        ? t.status.warn
+        : kind === 'err'
+          ? t.status.err
+          : t.fg.secondary;
   return (
-    <View
+    <RNText style={{ color: ink, fontSize: size('14'), fontFamily: face.medium }}>{label}</RNText>
+  );
+}
+
+/* .kb-count: a number beside a label, secondary and tabular so a column of them lines up. */
+export function Count({ children }: { children: string | number }) {
+  const { t, size } = useTheme();
+  return (
+    <RNText
       style={{
-        alignSelf: 'flex-start',
-        paddingHorizontal: space[12],
-        paddingVertical: space[4],
-        borderRadius: radius,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: ground,
+        color: t.fg.secondary,
+        fontSize: size('14'),
+        fontFamily: face.regular,
+        fontVariant: ['tabular-nums'],
       }}
     >
-      <RNText style={{ color: ground, fontSize: size('12'), fontFamily: face.medium }}>
-        {label}
-      </RNText>
-    </View>
+      {children}
+    </RNText>
   );
 }
 
@@ -444,7 +504,7 @@ export function Button({
       style={({ pressed }) => ({
         height: control.md,
         justifyContent: 'center',
-        paddingHorizontal: space[24],
+        paddingHorizontal: space[16],
         borderRadius: radius,
         backgroundColor: primary
           ? pressed
@@ -453,8 +513,8 @@ export function Button({
           : pressed
             ? t.bg.pressed
             : t.bg.surface,
-        borderWidth: primary ? 0 : StyleSheet.hairlineWidth,
-        borderColor: t.border.control,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: primary ? t.fill.default : pressed ? t.border.strong : t.border.control,
       })}
     >
       <RNText

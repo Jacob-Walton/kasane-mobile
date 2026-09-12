@@ -95,10 +95,11 @@
           KText("Small, fourteen", step: .small, muted: true)
           KText("Caps, twelve", step: .caps, muted: true)
 
-          HStack(spacing: Kasane.Space.s8) {
-            Pill("Neutral")
-            Pill("Open", kind: .ok)
-            Pill("Warn", kind: .warn)
+          HStack(spacing: Kasane.Space.s16) {
+            Status("Neutral")
+            Status("Open", kind: .ok)
+            Status("Warn", kind: .warn)
+            Count(42)
           }
 
           Tray(

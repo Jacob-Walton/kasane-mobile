@@ -99,6 +99,25 @@ for (const [key, raw] of base) {
   type[step][part] = part === 'size' ? rem(raw) : Number(String(raw).replace('em', '')) || 0;
 }
 
+/* a CSS box-shadow does not port: both platforms take the parts separately. The colour carries the
+   alpha, so it is split out of the rgba and handed over as an opacity. */
+const shadow = {};
+for (const [key, raw] of base) {
+  const match = /^shadow\.(\w+)$/.exec(key);
+  if (!match) continue;
+  const n = String.raw`(-?[\d.]+)(?:px)?`;
+  const parts = new RegExp(`^${n}\\s+${n}\\s+${n}\\s+rgba\\(([^)]+)\\)$`).exec(String(raw));
+  if (!parts) throw new Error(`shadow ${key} is not x y blur rgba(): ${raw}`);
+  const [r, g, b, a] = parts[4].split(',').map((n) => Number(n.trim()));
+  shadow[match[1]] = {
+    x: Number(parts[1]),
+    y: Number(parts[2]),
+    blur: Number(parts[3]),
+    colour: `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`,
+    opacity: a,
+  };
+}
+
 /* ---- Swift ----------------------------------------------------------------------------------- */
 
 const swiftName = (s) => s.replace(/[-.](\w)/g, (_, c) => c.toUpperCase());
@@ -139,6 +158,24 @@ public enum Kasane {
 
   /// The one radius. A control at any of the three heights becomes a pill.
   public static let radius: Double = ${radius}
+
+  /// A shadow, in the parts a platform takes. The web writes these as one box-shadow string.
+  public struct Shadow: Sendable {
+    public let x: Double
+    public let y: Double
+    public let blur: Double
+    public let colour: String
+    public let opacity: Double
+  }
+
+  public enum Shadows {
+${Object.entries(shadow)
+  .map(
+    ([k, v]) =>
+      `    public static let ${k} = Shadow(x: ${v.x}, y: ${v.y}, blur: ${v.blur}, colour: "${v.colour}", opacity: ${v.opacity})`,
+  )
+  .join('\n')}
+  }
 
   /// The space ladder, in points.
   public enum Space {
@@ -198,6 +235,9 @@ export const control = { sm: ${control.sm}, md: ${control.md}, lg: ${control.lg}
 /** The one radius. */
 export const radius = ${radius};
 
+/** Shadows in the parts React Native takes. The web writes these as one box-shadow string. */
+export const shadow = ${JSON.stringify(shadow, null, 2)} as const;
+
 export const space = ${JSON.stringify(space, null, 2).replace(/"/g, '')} as const;
 
 /** Sizes before the OS text scale is applied. Multiply by PixelRatio.getFontScale(). */
@@ -229,6 +269,7 @@ const count = (theme) =>
 
 console.log(
   `from ${kasane}: ${count(themes.light)} light colours, ${count(themes.dark)} dark, ` +
-    `${Object.keys(space).length} space rungs, ${Object.keys(type).length} type steps`,
+    `${Object.keys(space).length} space rungs, ${Object.keys(type).length} type steps, ` +
+    `${Object.keys(shadow).length} shadows`,
 );
 console.log('wrote tokens/KasaneTokens.swift and tokens/theme.ts');

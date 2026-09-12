@@ -6,6 +6,24 @@ export const control = { sm: 44, md: 48, lg: 56 } as const;
 /** The one radius. */
 export const radius = 24;
 
+/** Shadows in the parts React Native takes. The web writes these as one box-shadow string. */
+export const shadow = {
+  "raised": {
+    "x": 0,
+    "y": 16,
+    "blur": 48,
+    "colour": "#221a1e",
+    "opacity": 0.18
+  },
+  "bar": {
+    "x": 0,
+    "y": 8,
+    "blur": 32,
+    "colour": "#221a1e",
+    "opacity": 0.16
+  }
+} as const;
+
 export const space = {
   4: 4,
   8: 8,

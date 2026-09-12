@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { Text, face, radius, space, useTheme } from './ui';
 
 /* Markdown, as much of it as an issue body actually uses. Not a parser: a block splitter and one
@@ -177,34 +177,44 @@ export function Markdown({ source, empty }: { source?: string | null; empty?: st
                 {block.text}
               </Text>
             );
+          // .kb-prose hr: a short 2px bar in the strong ink, not a hairline across the column
           case 'rule':
             return (
               <View
                 key={i}
-                style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.border.hairline }}
+                style={{
+                  height: 2,
+                  width: space[64],
+                  borderRadius: radius,
+                  backgroundColor: t.border.strong,
+                  marginVertical: space[24],
+                }}
               />
             );
+          // .kb-prose blockquote: a filled block on the page ground. The left rule is a markdown
+          // convention, not one of ours.
           case 'quote':
             return (
               <View
                 key={i}
                 style={{
-                  borderLeftWidth: space[4],
-                  borderLeftColor: t.border.hairline,
-                  paddingLeft: space[12],
+                  padding: space[16],
+                  backgroundColor: t.bg.page,
+                  borderRadius: radius,
                 }}
               >
                 <Inline text={block.text} />
               </View>
             );
+          // .kb-prose pre: the page ground, the one radius, 14 in the mono face
           case 'code':
             return (
               <View
                 key={i}
                 style={{
-                  backgroundColor: t.bg.raised,
+                  backgroundColor: t.bg.page,
                   borderRadius: radius,
-                  padding: space[12],
+                  padding: space[16],
                 }}
               >
                 <Text kind="small" style={{ fontFamily: face.mono }}>

@@ -3,7 +3,18 @@ import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, View } from 'react-native';
 import * as api from '../../../../gitea';
-import { Bar, Failed, Panel, Refresh, Row, Tabs, Text, Waiting, space } from '../../../../ui';
+import {
+  Bar,
+  Failed,
+  Panel,
+  Refresh,
+  Row,
+  Text,
+  Tray,
+  Waiting,
+  space,
+  useBarInset,
+} from '../../../../ui';
 
 /* One repository's issues and pulls. The two are one list on the instance, told apart by whether
    an entry carries a pull request, which is why the filter is here and not in the query. */
@@ -17,6 +28,7 @@ export default function Issues() {
   const router = useRouter();
   const [kind, setKind] = useState<Kind>('issues');
   const [state, setState] = useState<State>('open');
+  const top = useBarInset();
 
   const q = useQuery({ queryKey: ['issues', full], queryFn: () => api.issues(full) });
 
@@ -28,15 +40,10 @@ export default function Issues() {
     all.filter((i) => (k === 'pulls' ? !!i.pull_request : !i.pull_request) && i.state === s).length;
 
   return (
-    <>
-      <Bar
-        title={name}
-        onBack={router.back}
-        action={<Refresh busy={q.isRefetching} onPress={q.refetch} />}
-      />
+    <View style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-        <View style={{ padding: space[16], gap: space[8] }}>
-          <Tabs
+        <View style={{ padding: space[16], paddingTop: top, gap: space[8] }}>
+          <Tray
             value={kind}
             onChange={(v) => setKind(v as Kind)}
             options={[
@@ -44,7 +51,7 @@ export default function Issues() {
               { value: 'pulls', label: `Pulls ${count('pulls', state)}` },
             ]}
           />
-          <Tabs
+          <Tray
             value={state}
             onChange={(v) => setState(v as State)}
             options={[
@@ -99,6 +106,11 @@ export default function Issues() {
           />
         )}
       </View>
-    </>
+      <Bar
+        title={name}
+        onBack={router.back}
+        action={<Refresh busy={q.isRefetching} onPress={q.refetch} />}
+      />
+    </View>
   );
 }

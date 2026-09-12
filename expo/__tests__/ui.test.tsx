@@ -1,7 +1,7 @@
 import { render, userEvent } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Bar, Failed, Refresh, Row, Tabs } from '../ui';
+import { Bar, Failed, Refresh, Row, Tray } from '../ui';
 import { control } from '../theme';
 
 /* A phone tells the app its insets. Off a phone nothing does, so the bar's tests name a frame. */
@@ -41,10 +41,10 @@ test('a row is at least a control tall', async () => {
   expect(flat.minHeight).toBeGreaterThanOrEqual(control.md);
 });
 
-test('a tab says whether it is the selected one', async () => {
+test('a tray item says whether it is the selected one', async () => {
   const onChange = jest.fn();
   const view = await render(
-    <Tabs
+    <Tray
       value="open"
       onChange={onChange}
       options={[

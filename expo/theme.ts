@@ -24,6 +24,12 @@ export const shadow = {
   }
 } as const;
 
+/** One duration and one curve, the same two every CSS transition in Kasane names. */
+export const motion = {
+  duration: 120,
+  curve: [0.2,0,0,1] as [number, number, number, number],
+} as const;
+
 /** The ladder remapped the way data-kb-density=compact remaps it: a phone is always compact. */
 export const space = {
   4: 4,

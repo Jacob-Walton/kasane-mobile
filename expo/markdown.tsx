@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
-import { Text, face, radius, space, useTheme } from './ui';
+import { Text, face, radius, space, useTheme } from './kasane';
 
 /* Markdown, as much of it as an issue body actually uses. Not a parser: a block splitter and one
    pass of inline marks, which covers headings, lists, quotes, fences, rules and the three inline

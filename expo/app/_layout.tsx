@@ -7,15 +7,25 @@ import {
   useFonts,
 } from '@expo-google-fonts/ibm-plex-sans';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { DefaultTheme, Stack, ThemeProvider, type Theme } from 'expo-router';
+import {
+  DefaultTheme,
+  Stack,
+  ThemeProvider,
+  useRouter,
+  useSegments,
+  type Theme,
+} from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useTheme } from '../ui';
+import { Bar, ToastProvider, useTheme } from '../kasane';
 
 /* The router gives routes, deep links and the back gesture. It gives no chrome: headerShown is off
-   everywhere, and each screen draws its own bar from the tokens.
+   everywhere.
+
+   The bar is here and not on a screen, which is what makes this behave like the site: the web has
+   one fixed bar and the page changes under it. A bar drawn per screen slides away with the card.
 
    The faces are bundled, not asked of the OS, so a string reads in Kasane's face on both platforms
    and neither one substitutes its own.
@@ -24,8 +34,15 @@ import { useTheme } from '../ui';
    bar and the safe area it measures. Those are behaviour, not appearance, and a hand-rolled stack
    loses the back gesture along with them. */
 
+const SECTIONS = [
+  { at: '/', label: 'Parts' },
+  { at: '/gitea', label: 'Repositories' },
+];
+
 export default function Layout() {
   const { t, dark } = useTheme();
+  const router = useRouter();
+  const segments = useSegments();
   const [ready] = useFonts({
     IBMPlexSans_400Regular,
     IBMPlexSans_500Medium,
@@ -66,18 +83,31 @@ export default function Layout() {
   // nothing is drawn in a face we did not choose, so nothing is drawn until the faces are in
   if (!ready) return null;
 
+  const first = segments[0] ?? '';
+  const here = first === 'gitea' ? '/gitea' : '/';
+
   return (
     <SafeAreaProvider style={{ backgroundColor: t.bg.page }}>
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: t.bg.page }}>
         <QueryClientProvider client={client}>
           <ThemeProvider value={ground}>
-            <StatusBar style={dark ? 'light' : 'dark'} />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: t.bg.page },
-              }}
-            />
+            <ToastProvider>
+              <StatusBar style={dark ? 'light' : 'dark'} />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: t.bg.page },
+                }}
+              />
+              <Bar
+                onBrand={() => router.navigate('/')}
+                items={SECTIONS.map((one) => ({
+                  label: one.label,
+                  current: one.at === here,
+                  onPress: () => router.navigate(one.at),
+                }))}
+              />
+            </ToastProvider>
           </ThemeProvider>
         </QueryClientProvider>
       </GestureHandlerRootView>

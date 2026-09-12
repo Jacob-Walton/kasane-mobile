@@ -13,6 +13,12 @@ public enum Kasane {
   /// The one radius. A control at any of the three heights becomes a pill.
   public static let radius: Double = 24
 
+  /// One duration and one curve, the same two every CSS transition in Kasane names.
+  public enum Motion {
+    public static let duration: Double = 0.12
+    public static let curve: (Double, Double, Double, Double) = (0.2, 0, 0, 1)
+  }
+
   /// A shadow, in the parts a platform takes. The web writes these as one box-shadow string.
   public struct Shadow: Sendable {
     public let x: Double

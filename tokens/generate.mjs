@@ -102,6 +102,15 @@ for (const [key, raw] of base) {
   type[step][part] = part === 'size' ? rem(raw) : Number(String(raw).replace('em', '')) || 0;
 }
 
+/* motion: one duration and one curve, the same two the CSS transitions name. A press that snaps
+   back instantly is the difference between a control and a picture of one. */
+const motion = {
+  duration: Number(String(base.get('motion.duration') ?? '120ms').replace('ms', '')),
+  ease: String(base.get('motion.ease') ?? 'cubic-bezier(0.2, 0, 0, 1)'),
+};
+const bezier = /cubic-bezier\(([^)]+)\)/.exec(motion.ease);
+motion.curve = bezier ? bezier[1].split(',').map((n) => Number(n.trim())) : [0.2, 0, 0, 1];
+
 /* a CSS box-shadow does not port: both platforms take the parts separately. The colour carries the
    alpha, so it is split out of the rgba and handed over as an opacity. */
 const shadow = {};
@@ -161,6 +170,12 @@ public enum Kasane {
 
   /// The one radius. A control at any of the three heights becomes a pill.
   public static let radius: Double = ${radius}
+
+  /// One duration and one curve, the same two every CSS transition in Kasane names.
+  public enum Motion {
+    public static let duration: Double = ${motion.duration / 1000}
+    public static let curve: (Double, Double, Double, Double) = (${motion.curve.join(', ')})
+  }
 
   /// A shadow, in the parts a platform takes. The web writes these as one box-shadow string.
   public struct Shadow: Sendable {
@@ -248,6 +263,12 @@ export const radius = ${radius};
 
 /** Shadows in the parts React Native takes. The web writes these as one box-shadow string. */
 export const shadow = ${JSON.stringify(shadow, null, 2)} as const;
+
+/** One duration and one curve, the same two every CSS transition in Kasane names. */
+export const motion = {
+  duration: ${motion.duration},
+  curve: ${JSON.stringify(motion.curve)} as [number, number, number, number],
+} as const;
 
 /** The ladder remapped the way data-kb-density=compact remaps it: a phone is always compact. */
 export const space = ${JSON.stringify(compact, null, 2).replace(/"/g, '')} as const;

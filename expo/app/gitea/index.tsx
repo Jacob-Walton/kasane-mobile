@@ -13,7 +13,7 @@ import {
   Status,
   Waiting,
   space,
-  useBarClearance,
+  usePagePad,
 } from '../../kasane';
 
 /* Every repository the instance shows a guest. The same screen the web client draws at
@@ -27,17 +27,13 @@ export default function Repos() {
   const q = useQuery({ queryKey: ['repos'], queryFn: api.repos });
   const rows = q.data ?? [];
   const router = useRouter();
-  const bottom = useBarClearance();
+  const pad = usePagePad();
 
   return (
       <FlatList
         data={rows}
         keyExtractor={(repo) => String(repo.id)}
-        contentContainerStyle={{
-          padding: space[16],
-          paddingBottom: bottom,
-                    gap: space[16],
-        }}
+        contentContainerStyle={{ ...pad, gap: space[16] }}
         ListHeaderComponent={
           <Head
             title="Repositories"

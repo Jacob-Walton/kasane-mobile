@@ -13,9 +13,10 @@ import {
   Meta,
   Status,
   Tray,
+  Crumbs,
   Waiting,
   space,
-  useBarClearance,
+  usePagePad,
 } from '../../../../kasane';
 
 /* One repository: its issues and its pulls. Two trays, the sections and then the state, which is
@@ -34,7 +35,7 @@ export default function Issues() {
   const router = useRouter();
   const [kind, setKind] = useState<Kind>('issues');
   const [state, setState] = useState<State>('open');
-  const bottom = useBarClearance();
+  const pad = usePagePad();
 
   const q = useQuery({ queryKey: ['issues', full], queryFn: () => api.issues(full) });
 
@@ -49,9 +50,13 @@ export default function Issues() {
     <FlatList
       data={rows}
       keyExtractor={(issue) => String(issue.id)}
-      contentContainerStyle={{ padding: space[16], paddingBottom: bottom, gap: space[16] }}
+      contentContainerStyle={{ ...pad, gap: space[16] }}
       ListHeaderComponent={
         <>
+          <Crumbs
+            trail={[{ label: 'Repositories', href: '/gitea' }, { label: full }]}
+            onPress={(href) => router.navigate(href)}
+          />
           <Head
             title={kind === 'pulls' ? 'Pulls' : 'Issues'}
             aside={`${count(kind, 'open') + count(kind, 'closed')} in ${full}`}

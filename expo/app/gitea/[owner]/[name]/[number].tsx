@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 import * as api from '../../../../gitea';
 import { Markdown } from '../../../../markdown';
@@ -12,9 +12,10 @@ import {
   PanelHead,
   Status,
   Text,
+  Crumbs,
   Waiting,
   space,
-  useBarClearance,
+  usePagePad,
 } from '../../../../kasane';
 
 /* One issue: what it says, then what was said about it. The web client draws the title as a
@@ -29,7 +30,8 @@ export default function One() {
   }>();
   const full = `${owner}/${name}`;
   const n = Number(number);
-  const bottom = useBarClearance();
+  const router = useRouter();
+  const pad = usePagePad();
 
   const q = useQuery({
     queryKey: ['issue', full, n],
@@ -39,15 +41,21 @@ export default function One() {
     }),
   });
 
-  if (q.isPending) return <Waiting style={{ paddingBottom: bottom }} />;
-  if (q.isError) return <Failed error={q.error} onRetry={q.refetch} style={{ paddingBottom: bottom }} />;
+  if (q.isPending) return <Waiting style={pad} />;
+  if (q.isError) return <Failed error={q.error} onRetry={q.refetch} style={pad} />;
 
   const { issue, said } = q.data;
 
   return (
-    <ScrollView
-      contentContainerStyle={{ padding: space[16], paddingBottom: bottom, gap: space[16] }}
-    >
+    <ScrollView contentContainerStyle={{ ...pad, gap: space[16] }}>
+      <Crumbs
+        trail={[
+          { label: 'Repositories', href: '/gitea' },
+          { label: full, href: `/gitea/${owner}/${name}` },
+          { label: `#${number}` },
+        ]}
+        onPress={(href) => router.navigate(href)}
+      />
       <View style={{ gap: space[8] }}>
         <Text kind="heading">
           {issue.title}{' '}

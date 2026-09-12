@@ -1,7 +1,7 @@
 import { render, userEvent } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Bar, Choice, Empty, Failed, Item, Switch, Tray } from '../kasane';
+import { Bar, Choice, Empty, Failed, Item, Switch, Tray, usePagePad } from '../kasane';
 
 /* These render. A token that stops reaching a part, or an item that stops being one target, shows
    up here and not on a phone.
@@ -135,4 +135,22 @@ test('a choice and a switch say their state', async () => {
   expect(sw.props.accessibilityState.checked).toBe(true);
   await userEvent.press(sw);
   expect(flip).toHaveBeenCalledWith(false);
+});
+
+/* The safe area is the one number the app cannot know and must not guess. A screen that does not
+   spend it puts its first line under the notch and its last one under the bar. */
+test('a page spends the insets the OS reports, on every edge', async () => {
+  let pad: ReturnType<typeof usePagePad> | undefined;
+  const Probe = () => {
+    pad = usePagePad();
+    return null;
+  };
+  await render(<Probe />, { wrapper: Framed });
+
+  // 47 of notch plus the 16 rung
+  expect(pad?.paddingTop).toBe(47 + 12);
+  // 34 of home indicator, the 16 under the bar, the bar, and the 16 above it
+  expect(pad?.paddingBottom).toBe(34 + 12 + (40 + 8 * 2) + 12);
+  expect(pad?.paddingLeft).toBe(12);
+  expect(pad?.paddingRight).toBe(12);
 });

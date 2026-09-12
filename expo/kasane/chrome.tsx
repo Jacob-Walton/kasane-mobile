@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconMore } from '../icons';
 import { Seal } from '../seal';
 import { Press, control, face, radius, shadow, space, useTheme } from './theme';
+import { useBarInsets } from './page';
 import { Text } from './text';
 import { Menu, type MenuItem } from './feedback';
 
@@ -31,18 +31,13 @@ export function Bar({
   menuLabel?: string;
 }) {
   const { t } = useTheme();
-  const insets = useSafeAreaInsets();
+  const edge = useBarInsets();
   const here = items.find((item) => item.current);
 
   return (
     <View
       pointerEvents="box-none"
-      style={{
-        position: 'absolute',
-        left: space[16],
-        right: space[16],
-        bottom: insets.bottom + space[16],
-      }}
+      style={{ position: 'absolute', left: edge.left, right: edge.right, bottom: edge.bottom }}
     >
       <View
         style={{
@@ -118,13 +113,6 @@ export function Bar({
       </View>
     </View>
   );
-}
-
-/* What a screen's own content clears so the bar does not sit on top of its last row: the safe area,
-   the 16 under the bar, the bar itself, and one more 16 above it. */
-export function useBarClearance() {
-  const insets = useSafeAreaInsets();
-  return insets.bottom + space[16] + (control.md + space[8] * 2) + space[16];
 }
 
 /** .kb-footer: the closing band. On a phone it is the end of the page, not a fixed strip. */

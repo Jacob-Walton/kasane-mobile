@@ -110,5 +110,6 @@ export {
 } from './feedback';
 export type { MenuItem, ToastKind } from './feedback';
 
-export { Bar, Footer, Seal, useBarClearance } from './chrome';
+export { Bar, Footer, Seal } from './chrome';
+export { Band, Col, useBarInsets, usePagePad } from './page';
 export type { NavItem } from './chrome';

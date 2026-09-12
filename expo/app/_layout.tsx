@@ -30,9 +30,12 @@ import { Bar, ToastProvider, useTheme } from '../kasane';
    The faces are bundled, not asked of the OS, so a string reads in Kasane's face on both platforms
    and neither one substitutes its own.
 
-   What is still the platform's, deliberately: the push and pop motion, the back swipe, the status
-   bar and the safe area it measures. Those are behaviour, not appearance, and a hand-rolled stack
-   loses the back gesture along with them. */
+   Nothing about a screen change is the platform's either. A link on the web swaps the page: there
+   is no card sliding in from the right and no edge to swipe. animation none and gestureEnabled
+   false give that, and the way back is the Crumbs on the page, which is how the site says it.
+
+   What is still the OS's, because only the OS knows it: the status bar, and the safe area it
+   reports. Every screen spends that through usePagePad. */
 
 const SECTIONS = [
   { at: '/', label: 'Parts' },
@@ -96,6 +99,8 @@ export default function Layout() {
               <Stack
                 screenOptions={{
                   headerShown: false,
+                  animation: 'none',
+                  gestureEnabled: false,
                   contentStyle: { backgroundColor: t.bg.page },
                 }}
               />

@@ -1,7 +1,17 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Animated, Easing, Image, Pressable, View } from 'react-native';
 import { IconArrowDown, IconArrowUp } from '../icons';
-import { Press, control, face, motion, radius, space, useEased, useTheme } from './theme';
+import {
+  Press,
+  control,
+  face,
+  hairline,
+  motion,
+  radius,
+  space,
+  useEased,
+  useTheme,
+} from './theme';
 import { Cluster } from './layout';
 import { Text } from './text';
 
@@ -36,18 +46,54 @@ export function Button({
   icon?: ReactNode;
 }) {
   const { t, size: step } = useTheme();
+  const [down, setDown] = useState(false);
 
-  const grounds: Record<ButtonVariant, { rest: string; down: string; ink: string; edge: string }> = {
-    default: { rest: t.bg.surface, down: t.bg.pressed, ink: t.fg.default, edge: t.border.control },
-    primary: { rest: t.fill.default, down: t.fill.active, ink: t.fg.onFill, edge: t.fill.default },
+  /* button.css, variant by variant. Each :active names a ground and a border, and danger names an
+     ink as well: pressed, it fills with the accent and its words go to the ink that reads on it. */
+  const grounds: Record<
+    ButtonVariant,
+    { rest: string; down: string; ink: string; inkDown: string; edge: string; edgeDown: string }
+  > = {
+    default: {
+      rest: t.bg.surface,
+      down: t.bg.pressed,
+      ink: t.fg.default,
+      inkDown: t.fg.default,
+      edge: t.border.control,
+      edgeDown: t.border.strong,
+    },
+    primary: {
+      rest: t.fill.default,
+      down: t.fill.active,
+      ink: t.fg.onFill,
+      inkDown: t.fg.onFill,
+      edge: t.fill.default,
+      edgeDown: t.fill.active,
+    },
     accent: {
       rest: t.accent.default,
       down: t.accent.active,
       ink: t.fg.onAccent,
+      inkDown: t.fg.onAccent,
       edge: t.accent.default,
+      edgeDown: t.accent.active,
     },
-    quiet: { rest: 'transparent', down: t.bg.pressed, ink: t.fg.default, edge: 'transparent' },
-    danger: { rest: t.bg.surface, down: t.bg.pressed, ink: t.status.err, edge: t.status.err },
+    quiet: {
+      rest: 'transparent',
+      down: t.bg.pressed,
+      ink: t.fg.default,
+      inkDown: t.fg.default,
+      edge: 'transparent',
+      edgeDown: t.border.strong,
+    },
+    danger: {
+      rest: t.bg.surface,
+      down: t.accent.active,
+      ink: t.status.err,
+      inkDown: t.fg.onAccent,
+      edge: t.status.err,
+      edgeDown: t.accent.active,
+    },
   };
   const g = grounds[variant];
 
@@ -58,6 +104,10 @@ export function Button({
       onPress={disabled ? undefined : onPress}
       rest={g.rest}
       down={g.down}
+      edge={g.edge}
+      edgeDown={g.edgeDown}
+      onPressIn={() => setDown(true)}
+      onPressOut={() => setDown(false)}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -66,8 +116,8 @@ export function Button({
         height: HEIGHT[size],
         paddingHorizontal: space[16],
         borderRadius: radius,
-        borderWidth: 0.5,
-        borderColor: g.edge,
+        borderWidth: hairline,
+        // .kb-btn[disabled] is half opacity and takes no presses
         opacity: disabled ? 0.5 : 1,
         alignSelf: full ? 'stretch' : 'flex-start',
       }}
@@ -75,8 +125,8 @@ export function Button({
       {icon}
       {children === undefined ? null : (
         <Text
-          kind={size === 'sm' ? 'small' : 'small'}
-          style={{ color: g.ink, fontFamily: face.medium, fontSize: step('14') }}
+          kind="small"
+          style={{ color: down ? g.inkDown : g.ink, fontFamily: face.medium, fontSize: step('14') }}
         >
           {children}
         </Text>
@@ -150,7 +200,9 @@ export function Tray({
             accessibilityState={{ selected: on }}
             onPress={() => onChange(option.value)}
             rest={on ? t.fill.default : 'transparent'}
-            down={on ? t.fill.active : t.bg.surface}
+            down={on ? t.fill.active : t.bg.raised}
+            edge="transparent"
+            edgeDown={on ? 'transparent' : t.border.strong}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -158,6 +210,8 @@ export function Tray({
               height: HEIGHT[size],
               paddingHorizontal: space[16],
               borderRadius: radius,
+              // the tray item carries a transparent edge until it is pressed, then the strong one
+              borderWidth: hairline,
             }}
           >
             <Text

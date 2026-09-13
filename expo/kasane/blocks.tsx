@@ -53,16 +53,28 @@ export function Tile({
       {children}
     </>
   );
-  const shape = { gap: space[8], padding: space[24], borderRadius: radius } as const;
+  /* .kb-tile: a 2px transparent edge that takes the strong colour under a finger, so the tile does
+     not move when it is pressed. Not a hairline: the CSS says 2. */
+  const shape = {
+    gap: space[8],
+    minHeight: 320,
+    padding: space[32],
+    borderRadius: radius,
+    borderWidth: 2,
+  } as const;
   if (!onPress) {
-    return <View style={[shape, { backgroundColor: t.bg.tile }]}>{body}</View>;
+    return (
+      <View style={[shape, { backgroundColor: t.bg.tile, borderColor: 'transparent' }]}>{body}</View>
+    );
   }
   return (
     <Press
       accessibilityRole="button"
       onPress={onPress}
       rest={t.bg.tile}
-      down={t.bg.raised}
+      down={t.bg.tile}
+      edge="transparent"
+      edgeDown={t.border.strong}
       style={shape}
     >
       {body}
@@ -86,6 +98,7 @@ export function Stat({
   label,
   delta,
   bar,
+  onPress,
 }: {
   value: string;
   unit?: string;
@@ -93,19 +106,19 @@ export function Stat({
   delta?: number;
   /** .kb-stat__bar: the figure as a share of its whole */
   bar?: number;
+  /** a stat can be a link. Pressed, it goes to the pressed ground, as the CSS says. */
+  onPress?: () => void;
 }) {
   const { t } = useTheme();
-  return (
-    <View
-      style={{
-        flexGrow: 1,
-        flexBasis: '40%',
-        gap: space[4],
-        padding: space[16],
-        backgroundColor: t.bg.page,
-        borderRadius: radius,
-      }}
-    >
+  const shape = {
+    flexGrow: 1,
+    flexBasis: '40%' as const,
+    gap: space[4],
+    padding: space[16],
+    borderRadius: radius,
+  };
+  const body = (
+    <>
       <Cluster gap="tight" style={{ alignItems: 'baseline' }}>
         <Text kind="heading" num>
           {value}
@@ -121,7 +134,20 @@ export function Stat({
       </Text>
       {delta === undefined ? null : <Delta value={delta} />}
       {bar === undefined ? null : <Progress value={bar} label={label} />}
-    </View>
+    </>
+  );
+
+  if (!onPress) return <View style={[shape, { backgroundColor: t.bg.page }]}>{body}</View>;
+  return (
+    <Press
+      accessibilityRole="link"
+      onPress={onPress}
+      rest={t.bg.page}
+      down={t.bg.pressed}
+      style={shape}
+    >
+      {body}
+    </Press>
   );
 }
 

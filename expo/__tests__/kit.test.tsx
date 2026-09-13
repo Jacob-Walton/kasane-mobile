@@ -1,7 +1,20 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { act, render, userEvent } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Bar, Choice, Empty, Failed, Item, Switch, Tray, usePagePad } from '../kasane';
+import { focus, light } from '../theme';
+import {
+  Bar,
+  Choice,
+  Empty,
+  Failed,
+  Input,
+  Item,
+  Switch,
+  Tray,
+  hairline,
+  useFocusRing,
+  usePagePad,
+} from '../kasane';
 
 /* These render. A token that stops reaching a part, or an item that stops being one target, shows
    up here and not on a phone.
@@ -167,4 +180,51 @@ test('a page spends the insets the OS reports, on every edge', async () => {
   expect(pad.paddingBottom).toBe(34 + 12 + (40 + 8 * 2) + 12);
   expect(pad.paddingLeft).toBe(12);
   expect(pad.paddingRight).toBe(12);
+});
+
+/* :focus-visible in root.css is one rule for the whole system. It is the same three values here,
+   as real outline props, so a ring that stops matching the token shows up as a failure. */
+test('the focus ring is the token, not a colour that looks like it', async () => {
+  const seen: ReturnType<typeof useFocusRing>[] = [];
+  const Probe = () => {
+    seen.push(useFocusRing());
+    return null;
+  };
+  await render(<Probe />);
+  const at = seen[0];
+  expect(at.ring).toBeNull();
+
+  await act(async () => at.onFocus());
+  const ring = seen[seen.length - 1].ring;
+  expect(ring).toEqual({
+    outlineWidth: focus.width,
+    outlineColor: light.focus.color,
+    outlineOffset: focus.offset,
+    outlineStyle: 'solid',
+  });
+});
+
+/* A field that cannot be typed in says so, and a field that is wrong says so in the error colour.
+   Both are rules in form.css and neither can be seen in a screenshot of the happy path. */
+test('an input carries its disabled and invalid states', async () => {
+  const off = await render(<Input value="" onChange={() => {}} disabled placeholder="Name" />);
+  expect(off.getByPlaceholderText('Name').props.editable).toBe(false);
+
+  // the wrapper is a press so the field can show :active, not a button: it takes no role
+  const bad = await render(<Input value="" onChange={() => {}} invalid />);
+  const edges: { colour: unknown; width: unknown }[] = [];
+  const walk = (node: unknown) => {
+    if (!node || typeof node !== 'object') return;
+    const one = node as { props?: { style?: unknown }; children?: unknown[] };
+    for (const style of [one.props?.style].flat(3)) {
+      if (style && typeof style === 'object' && 'borderColor' in style) {
+        const edge = style as { borderColor: unknown; borderWidth: unknown };
+        edges.push({ colour: edge.borderColor, width: edge.borderWidth });
+      }
+    }
+    one.children?.forEach(walk);
+  };
+  walk(bad.toJSON());
+  // the CSS says a border and an inset ring of the same colour, which is two hairlines of it
+  expect(edges).toContainEqual({ colour: light.status.err, width: hairline * 2 });
 });

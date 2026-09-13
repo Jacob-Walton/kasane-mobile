@@ -102,6 +102,17 @@ for (const [key, raw] of base) {
   type[step][part] = part === 'size' ? rem(raw) : Number(String(raw).replace('em', '')) || 0;
 }
 
+/* a hairline is a real width, not a device pixel. The CSS says 1px and both platforms take a
+   point, so it is 1 on both. StyleSheet.hairlineWidth is thinner than the system asks for. */
+const hairline = px(base.get('borderWidth.hairline'));
+
+/* the focus ring. Its colour is per theme and comes out with the other colours; the width and the
+   offset are the same on both. */
+const focus = {
+  width: px(base.get('focus.width')),
+  offset: px(base.get('focus.offset')),
+};
+
 /* motion: one duration and one curve, the same two the CSS transitions name. A press that snaps
    back instantly is the difference between a control and a picture of one. */
 const motion = {
@@ -170,6 +181,15 @@ public enum Kasane {
 
   /// The one radius. A control at any of the three heights becomes a pill.
   public static let radius: Double = ${radius}
+
+  /// A hairline. The CSS says 1px and a point is a point.
+  public static let hairline: Double = ${hairline}
+
+  /// The focus ring. Its colour is per theme and sits with the other colours.
+  public enum Focus {
+    public static let width: Double = ${focus.width}
+    public static let offset: Double = ${focus.offset}
+  }
 
   /// One duration and one curve, the same two every CSS transition in Kasane names.
   public enum Motion {
@@ -261,6 +281,12 @@ export const control = { sm: ${control.sm}, md: ${control.md}, lg: ${control.lg}
 /** The one radius. */
 export const radius = ${radius};
 
+/** A hairline. The CSS says 1px and a point is a point. */
+export const hairline = ${hairline};
+
+/** The focus ring. Its colour is per theme and sits with the other colours. */
+export const focus = { width: ${focus.width}, offset: ${focus.offset} } as const;
+
 /** Shadows in the parts React Native takes. The web writes these as one box-shadow string. */
 export const shadow = ${JSON.stringify(shadow, null, 2)} as const;
 
@@ -307,6 +333,7 @@ console.log(
   `from ${kasane}: ${count(themes.light)} light colours, ${count(themes.dark)} dark, ` +
     `${Object.keys(space).length} space rungs (${Object.keys(REMAP).length} remapped), ` +
     `${Object.keys(type).length} type steps, ` +
-    `${Object.keys(shadow).length} shadows`,
+    `${Object.keys(shadow).length} shadows, a ${hairline}px hairline, ` +
+    `a ${focus.width}px focus ring at ${focus.offset}px`,
 );
 console.log('wrote tokens/KasaneTokens.swift and tokens/theme.ts');

@@ -1,13 +1,27 @@
-import { useState, type ReactNode } from 'react';
-import { Animated, TextInput, View } from 'react-native';
+import { useRef, useState, type ReactNode } from 'react';
+import { Animated, Pressable, TextInput, View } from 'react-native';
 import { IconCheck, IconChevronDown } from '../icons';
-import { Press, control, face, radius, space, useEased, useTheme } from './theme';
-import { Cluster, Stack } from './layout';
+import {
+  Press,
+  control,
+  face,
+  hairline,
+  radius,
+  space,
+  useEased,
+  useFocusRing,
+  useTheme,
+} from './theme';
+import { Stack } from './layout';
 import { Text } from './text';
 import { Button } from './controls';
 
-/* Fields. The one thing that differs from the web here is the keyboard: a field says what kind of
-   text it wants so the OS offers the right one, which the web does with the type attribute. */
+/* Fields, drawn from form.css rule for rule.
+
+   Two things a phone adds. A field says what kind of text it wants so the OS offers the right
+   keyboard, which the web does with the type attribute. And there is no :hover, so a press shows
+   the :active rule: on the web a finger fires hover and then active, and active is the one that is
+   true while the finger is down. */
 
 /** .kb-fieldset: a titled group of fields on a surface */
 export function Fieldset({ legend, children }: { legend: string; children: ReactNode }) {
@@ -16,12 +30,15 @@ export function Fieldset({ legend, children }: { legend: string; children: React
     <View
       style={{
         gap: space[16],
-        padding: space[24],
+        padding: space[32],
         backgroundColor: t.bg.surface,
         borderRadius: radius,
       }}
     >
-      <Text kind="heading">{legend}</Text>
+      {/* .kb-fieldset > legend: 24, semibold, and 8 clear of the first field */}
+      <Text kind="heading" style={{ marginBottom: space[8] }}>
+        {legend}
+      </Text>
       {children}
     </View>
   );
@@ -32,16 +49,25 @@ export function Form({ children }: { children: ReactNode }) {
   return <Stack gap={space[16]}>{children}</Stack>;
 }
 
-/** .kb-form-actions: what the form does, at its end */
+/** .kb-form__actions: what the form does, at its end */
 export function FormActions({ children }: { children: ReactNode }) {
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: space[8] }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'flex-end',
+        gap: space[8],
+        paddingTop: space[8],
+      }}
+    >
       {children}
     </View>
   );
 }
 
-/** .kb-field: a label, the control, and the hint or the error under it */
+/* .kb-field: a label, the control, and the hint or the error under it. The label and the hint are
+   inset by 16 so they line up with the text inside the control. */
 export function Field({
   label,
   hint,
@@ -55,20 +81,35 @@ export function Field({
   required?: boolean;
   children: ReactNode;
 }) {
-  const { t } = useTheme();
+  const { t, size } = useTheme();
   return (
     <View style={{ gap: space[4] }}>
-      <Text kind="small" strong style={{ paddingHorizontal: space[16], fontFamily: face.medium }}>
+      <Text kind="small" style={{ paddingHorizontal: space[16], fontFamily: face.medium }}>
         {label}
-        {required ? <Text kind="small" style={{ color: t.status.err }}> *</Text> : null}
+        {required ? (
+          <Text kind="small" style={{ color: t.status.err, fontFamily: face.medium }}>
+            {' *'}
+          </Text>
+        ) : null}
       </Text>
       {children}
+      {/* .kb-field__error is 12 and medium in the error colour; the hint is 12 and secondary */}
       {error ? (
-        <Text kind="caps" style={{ color: t.status.err, paddingHorizontal: space[16] }}>
+        <Text
+          style={{
+            paddingHorizontal: space[16],
+            color: t.status.err,
+            fontSize: size('12'),
+            fontFamily: face.medium,
+          }}
+        >
           {error}
         </Text>
       ) : hint ? (
-        <Text kind="caps" muted style={{ paddingHorizontal: space[16], textTransform: 'none' }}>
+        <Text
+          muted
+          style={{ paddingHorizontal: space[16], fontSize: size('12'), fontFamily: face.regular }}
+        >
           {hint}
         </Text>
       ) : null}
@@ -87,100 +128,129 @@ const KEYBOARD: Record<Kind, 'default' | 'email-address' | 'numeric' | 'url'> = 
   url: 'url',
 };
 
-/** .kb-input: one control height, the surface ground, a control border */
+/* .kb-input: one control height, the surface ground, a hairline in the control colour.
+
+   :active takes the ground to raised, which needs a press the field itself cannot report, so the
+   field sits inside one. Pressing it also puts the caret in, which is what clicking does. */
 export function Input({
   value,
   onChange,
   placeholder,
   kind = 'text',
   invalid,
+  disabled,
   icon,
+  small,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   kind?: Kind;
   invalid?: boolean;
+  disabled?: boolean;
   /** .kb-input-icon: a mark inside the field, at its leading edge */
   icon?: ReactNode;
+  small?: boolean;
 }) {
   const { t, size } = useTheme();
-  const [focus, setFocus] = useState(false);
+  const field = useRef<TextInput>(null);
+  const [down, setDown] = useState(false);
+  const focusRing = useFocusRing();
+
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: space[8],
-        height: control.md,
-        paddingHorizontal: space[16],
-        backgroundColor: t.bg.surface,
-        borderRadius: radius,
-        borderWidth: invalid || focus ? 1 : 0.5,
-        borderColor: invalid ? t.status.err : focus ? t.border.strong : t.border.control,
-      }}
+    <Pressable
+      unstable_pressDelay={0}
+      onPressIn={() => setDown(true)}
+      onPressOut={() => setDown(false)}
+      onPress={() => field.current?.focus()}
+      disabled={disabled}
+      style={[
+        {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: space[8],
+          height: small ? control.sm : control.md,
+          paddingHorizontal: small ? space[12] : space[16],
+          borderRadius: radius,
+          // :active is the ground; [disabled] is the ground, the ink and the edge
+          backgroundColor: disabled || down ? t.bg.raised : t.bg.surface,
+          // invalid is a border and an inset ring of the same colour, which is two of them
+          borderWidth: invalid ? hairline * 2 : hairline,
+          borderColor: invalid ? t.status.err : disabled ? t.border.hairline : t.border.control,
+        },
+        focusRing.ring,
+      ]}
     >
       {icon}
       <TextInput
+        ref={field}
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
+        // .kb-input::placeholder is the muted ink at full opacity
         placeholderTextColor={t.fg.muted}
+        editable={!disabled}
         secureTextEntry={kind === 'password'}
         keyboardType={KEYBOARD[kind]}
         autoCapitalize={kind === 'email' || kind === 'url' ? 'none' : 'sentences'}
         autoCorrect={kind !== 'email' && kind !== 'url' && kind !== 'password'}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
+        onFocus={focusRing.onFocus}
+        onBlur={focusRing.onBlur}
         style={{
           flex: 1,
-          color: t.fg.default,
-          fontSize: size('16'),
+          color: disabled ? t.fg.muted : t.fg.default,
+          fontSize: small ? size('14') : size('16'),
           fontFamily: face.regular,
           // a TextInput carries its own padding on Android, which puts the text off the centre line
           padding: 0,
         }}
       />
-    </View>
+    </Pressable>
   );
 }
 
-/** .kb-textarea: the same field, several lines tall */
+/* .kb-textarea: the same field, at least two and a half controls tall, with 8 above and below and
+   its own 1.5 leading rather than the ladder's. */
 export function Textarea({
   value,
   onChange,
   placeholder,
-  rows = 4,
+  disabled,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  rows?: number;
+  disabled?: boolean;
 }) {
-  const { t, size, line } = useTheme();
-  const [focus, setFocus] = useState(false);
+  const { t, size } = useTheme();
+  const focusRing = useFocusRing();
   return (
     <TextInput
       value={value}
       onChangeText={onChange}
       placeholder={placeholder}
       placeholderTextColor={t.fg.muted}
+      editable={!disabled}
       multiline
       textAlignVertical="top"
-      onFocus={() => setFocus(true)}
-      onBlur={() => setFocus(false)}
-      style={{
-        minHeight: line('16') * rows + space[16] * 2,
-        padding: space[16],
-        backgroundColor: t.bg.surface,
-        color: t.fg.default,
-        borderRadius: radius,
-        borderWidth: focus ? 1 : 0.5,
-        borderColor: focus ? t.border.strong : t.border.control,
-        fontSize: size('16'),
-        lineHeight: line('16'),
-        fontFamily: face.regular,
-      }}
+      onFocus={focusRing.onFocus}
+      onBlur={focusRing.onBlur}
+      style={[
+        {
+          minHeight: control.md * 2.5,
+          paddingHorizontal: space[16],
+          paddingVertical: space[8],
+          backgroundColor: disabled ? t.bg.raised : t.bg.surface,
+          color: disabled ? t.fg.muted : t.fg.default,
+          borderRadius: radius,
+          borderWidth: hairline,
+          borderColor: disabled ? t.border.hairline : t.border.control,
+          fontSize: size('16'),
+          lineHeight: size('16') * 1.5,
+          fontFamily: face.regular,
+        },
+        focusRing.ring,
+      ]}
     />
   );
 }
@@ -190,14 +260,18 @@ export function Group({ children }: { children: ReactNode }) {
   return <Stack gap={space[16]}>{children}</Stack>;
 }
 
-/* .kb-choice: a radio or a checkbox as one target the width of the row, since a 16px box is not
-   something to aim a thumb at. The mark is our own: a platform checkbox is the platform's. */
+/* .kb-choice: a label, its box, and the words beside it. Not a card: the CSS gives it no ground and
+   no border of its own, only a gap of 8 and a minimum height.
+
+   The box is 28 by 20 for a checkbox and 20 by 20 for a radio, and the mark inside is 14 square,
+   or an 8 dot for a radio. Those are literals in form.css too, not rungs. */
 export function Choice({
   label,
   hint,
   checked,
   onChange,
   many,
+  disabled,
 }: {
   label: string;
   hint?: string;
@@ -205,131 +279,215 @@ export function Choice({
   onChange: (checked: boolean) => void;
   /** many is a checkbox, one is a radio */
   many?: boolean;
+  disabled?: boolean;
 }) {
   const { t } = useTheme();
+  const [down, setDown] = useState(false);
+  const focusRing = useFocusRing();
+  const mark = useEased(checked ? 1 : 0);
+
+  const ground = disabled
+    ? checked
+      ? t.border.control
+      : t.bg.raised
+    : checked
+      ? down
+        ? t.accent.active
+        : t.accent.default
+      : down
+        ? t.bg.pressed
+        : t.bg.surface;
+  const edge = disabled
+    ? checked
+      ? t.border.control
+      : t.border.hairline
+    : checked
+      ? down
+        ? t.accent.active
+        : t.accent.default
+      : t.border.control;
+
   return (
-    <Press
+    <Pressable
       accessibilityRole={many ? 'checkbox' : 'radio'}
-      accessibilityState={{ checked }}
+      accessibilityState={{ checked, disabled: !!disabled }}
+      unstable_pressDelay={0}
+      onPressIn={() => setDown(true)}
+      onPressOut={() => setDown(false)}
       onPress={() => onChange(!checked)}
-      rest={t.bg.surface}
-      down={t.bg.pressed}
+      onFocus={focusRing.onFocus}
+      onBlur={focusRing.onBlur}
+      disabled={disabled}
       style={{
         flexDirection: 'row',
-        alignItems: 'center',
-        gap: space[12],
-        minHeight: control.md,
-        padding: space[12],
-        borderRadius: radius,
-        borderWidth: 0.5,
-        borderColor: checked ? t.border.strong : t.border.control,
+        alignItems: 'flex-start',
+        gap: space[8],
+        minHeight: space[24],
       }}
     >
       <View
-        style={{
-          width: space[24],
-          height: space[24],
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: many ? space[8] : space[12],
-          borderWidth: checked ? 0 : 0.5,
-          borderColor: t.border.control,
-          backgroundColor: checked ? t.fill.default : 'transparent',
-        }}
+        style={[
+          {
+            width: many ? 28 : 20,
+            height: 20,
+            marginVertical: 2,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: many ? radius : 10,
+            borderWidth: hairline,
+            borderColor: edge,
+            backgroundColor: ground,
+          },
+          focusRing.ring,
+        ]}
       >
-        {checked ? <IconCheck size={16} colour={t.fg.onFill} /> : null}
+        <Animated.View style={{ opacity: mark }}>
+          {many ? (
+            <IconCheck size={14} colour={t.fg.onAccent} />
+          ) : (
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: t.fg.onAccent }} />
+          )}
+        </Animated.View>
       </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text kind="small" style={{ fontFamily: face.medium }}>
+      <View style={{ flex: 1 }}>
+        <Text
+          kind="small"
+          style={{ color: disabled ? t.fg.muted : t.fg.default, fontFamily: face.medium }}
+        >
           {label}
         </Text>
+        {/* .kb-choice__text small: 12, regular, secondary, on its own line */}
         {hint ? (
-          <Text kind="caps" muted style={{ textTransform: 'none' }}>
+          <Text muted style={{ fontSize: 12, fontFamily: face.regular }}>
             {hint}
           </Text>
         ) : null}
       </View>
-    </Press>
+    </Pressable>
   );
 }
 
-/* .kb-switch: on or off, with the knob crossing over the motion tokens. Not the platform Switch,
-   which is the platform's shape and its accent colour. */
+/* .kb-switch: a 64 by 32 track carrying the word for its state, and a 24 knob that crosses to the
+   other end over the motion tokens. Every number here is in form.css. */
 export function Switch({
   label,
   value,
   onChange,
+  on = 'On',
+  off = 'Off',
+  disabled,
 }: {
   label: string;
   value: boolean;
   onChange: (value: boolean) => void;
+  /** .kb-switch reads these off data-kb-on and data-kb-off */
+  on?: string;
+  off?: string;
+  disabled?: boolean;
 }) {
-  const { t } = useTheme();
+  const { t, size } = useTheme();
+  const [down, setDown] = useState(false);
+  const focusRing = useFocusRing();
   const at = useEased(value ? 1 : 0);
-  const track = space[48];
-  const knob = space[24];
+
   return (
-    <Press
+    <Pressable
       accessibilityRole="switch"
-      accessibilityState={{ checked: value }}
+      accessibilityState={{ checked: value, disabled: !!disabled }}
       accessibilityLabel={label}
+      unstable_pressDelay={0}
+      onPressIn={() => setDown(true)}
+      onPressOut={() => setDown(false)}
       onPress={() => onChange(!value)}
-      rest="transparent"
-      down={t.bg.pressed}
+      onFocus={focusRing.onFocus}
+      onBlur={focusRing.onBlur}
+      disabled={disabled}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: space[12],
-        minHeight: control.md,
-        paddingHorizontal: space[8],
-        borderRadius: radius,
+        gap: space[8],
+        minHeight: space[32],
+        opacity: disabled ? 0.5 : 1,
       }}
     >
-      <Text kind="small" style={{ flex: 1, fontFamily: face.medium }}>
-        {label}
-      </Text>
       <View
-        style={{
-          width: track,
-          height: knob + 4,
-          borderRadius: radius,
-          padding: 2,
-          backgroundColor: value ? t.fill.default : t.bg.pressed,
-          justifyContent: 'center',
-        }}
+        style={[
+          {
+            width: 64,
+            height: space[32],
+            borderRadius: radius,
+            borderWidth: hairline,
+            borderColor: value ? t.accent.default : t.border.control,
+            backgroundColor: value ? t.accent.default : t.bg.raised,
+            justifyContent: 'center',
+          },
+          focusRing.ring,
+        ]}
       >
+        {/* the word sits in a 34 column at the end the knob is not at */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            width: 34,
+            left: value ? 0 : undefined,
+            right: value ? undefined : 0,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text
+            style={{
+              color: value ? t.fg.onAccent : t.fg.secondary,
+              fontSize: size('12'),
+              fontFamily: face.medium,
+              letterSpacing: size('12') * 0.04,
+            }}
+          >
+            {value ? on : off}
+          </Text>
+        </View>
         <Animated.View
           style={{
-            width: knob,
-            height: knob,
-            borderRadius: knob / 2,
-            backgroundColor: value ? t.fg.onFill : t.bg.surface,
-            transform: [
-              {
-                translateX: at.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, track - knob - 4],
-                }),
-              },
-            ],
+            position: 'absolute',
+            top: 3,
+            width: 24,
+            height: 24,
+            borderRadius: radius,
+            borderWidth: hairline,
+            borderColor: value ? t.fg.onAccent : t.border.control,
+            backgroundColor: down
+              ? value
+                ? t.fill.active
+                : t.bg.raised
+              : value
+                ? t.fg.onAccent
+                : t.bg.surface,
+            left: at.interpolate({ inputRange: [0, 1], outputRange: [3, 35] }),
           }}
         />
       </View>
-    </Press>
+      <Text kind="small" style={{ flex: 1, fontFamily: face.medium }}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
-/** .kb-select: one of a set. The sheet it opens is in feedback.tsx. */
+/** .kb-select: one of a set. The list it opens is .kb-dd__list. */
 export function Select({
   value,
   options,
   onChange,
   placeholder = 'Choose',
+  disabled,
 }: {
   value?: string;
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
   placeholder?: string;
+  disabled?: boolean;
 }) {
   const { t } = useTheme();
   const [open, setOpen] = useState(false);
@@ -338,9 +496,9 @@ export function Select({
     <View style={{ gap: space[4] }}>
       <Press
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        onPress={() => setOpen(!open)}
-        rest={t.bg.surface}
+        accessibilityState={{ expanded: open, disabled: !!disabled }}
+        onPress={disabled ? undefined : () => setOpen(!open)}
+        rest={disabled ? t.bg.raised : t.bg.surface}
         down={t.bg.pressed}
         style={{
           flexDirection: 'row',
@@ -349,8 +507,8 @@ export function Select({
           height: control.md,
           paddingHorizontal: space[16],
           borderRadius: radius,
-          borderWidth: 0.5,
-          borderColor: t.border.control,
+          borderWidth: hairline,
+          borderColor: disabled ? t.border.hairline : t.border.control,
         }}
       >
         <Text kind="body" muted={!chosen} style={{ flex: 1 }}>
@@ -365,11 +523,12 @@ export function Select({
           style={{
             backgroundColor: t.bg.surface,
             borderRadius: radius,
-            borderWidth: 0.5,
+            borderWidth: hairline,
             borderColor: t.border.control,
             overflow: 'hidden',
           }}
         >
+          {/* .kb-dd__list [role=option]: selected is the raised ground, pressed is pressed */}
           {options.map((option) => (
             <Press
               key={option.value}
@@ -437,4 +596,4 @@ export function Toolbar({ children }: { children: ReactNode }) {
   );
 }
 
-export { Button, Cluster };
+export { Button };

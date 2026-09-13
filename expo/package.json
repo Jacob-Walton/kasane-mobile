@@ -36,9 +36,11 @@
   "scripts": {
     "start": "expo start",
     "web": "expo start --web",
-    "check": "tsc --noEmit && eslint . && jest --ci",
+    "check": "tsc --noEmit && eslint . && jest --ci && node ../scripts/parity.mjs ../../kurobeni && node ../scripts/states.mjs ../../kurobeni",
     "test": "jest",
-    "tokens": "node ../tokens/generate.mjs ../../kurobeni && node -e \"require('node:fs').copyFileSync('../tokens/theme.ts','theme.ts')\""
+    "tokens": "node ../tokens/generate.mjs ../../kurobeni && node -e \"require('node:fs').copyFileSync('../tokens/theme.ts','theme.ts')\"",
+    "states": "node ../scripts/states.mjs ../../kurobeni --list",
+    "parity": "node ../scripts/parity.mjs ../../kurobeni --list"
   },
   "private": true,
   "jest": {

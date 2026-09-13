@@ -13,6 +13,15 @@ public enum Kasane {
   /// The one radius. A control at any of the three heights becomes a pill.
   public static let radius: Double = 24
 
+  /// A hairline. The CSS says 1px and a point is a point.
+  public static let hairline: Double = 1
+
+  /// The focus ring. Its colour is per theme and sits with the other colours.
+  public enum Focus {
+    public static let width: Double = 2
+    public static let offset: Double = 2
+  }
+
   /// One duration and one curve, the same two every CSS transition in Kasane names.
   public enum Motion {
     public static let duration: Double = 0.12

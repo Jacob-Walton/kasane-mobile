@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Text as RNText, View, type TextProps } from 'react-native';
-import { face, space, useTheme, type Step } from './theme';
+import { face, hairline, space, type Step, useTheme } from './theme';
 
 /* Words. Every size is a rung of Kasane's ladder and every rung is multiplied by the reader's text
    scale, so no size here is final. */
@@ -128,7 +128,7 @@ export function FigureSwatch({ colour, name }: { colour: string; name: string })
           height: space[48],
           borderRadius: 24,
           backgroundColor: colour,
-          borderWidth: 0.5,
+          borderWidth: hairline,
           borderColor: t.border.hairline,
         }}
       />

@@ -4,7 +4,21 @@
    What a phone has no use for, and why, is listed in scripts/parity.mjs. What is here but shaped
    differently is listed in tokens/deviations.json. */
 
-export { Press, control, face, motion, radius, room, shadow, space, useEased, useTheme } from './theme';
+export {
+  Press,
+  control,
+  face,
+  focus,
+  hairline,
+  motion,
+  radius,
+  room,
+  shadow,
+  space,
+  useEased,
+  useFocusRing,
+  useTheme,
+} from './theme';
 export type { Ink, Step } from './theme';
 
 export { Count, Figure, FigureSwatch, Lede, Status, Text } from './text';

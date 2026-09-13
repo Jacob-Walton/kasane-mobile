@@ -6,6 +6,12 @@ export const control = { sm: 32, md: 40, lg: 48 } as const;
 /** The one radius. */
 export const radius = 24;
 
+/** A hairline. The CSS says 1px and a point is a point. */
+export const hairline = 1;
+
+/** The focus ring. Its colour is per theme and sits with the other colours. */
+export const focus = { width: 2, offset: 2 } as const;
+
 /** Shadows in the parts React Native takes. The web writes these as one box-shadow string. */
 export const shadow = {
   "raised": {

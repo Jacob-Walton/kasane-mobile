@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { View, type ViewProps } from 'react-native';
-import { Press, face, radius, space, useTheme } from './theme';
+import { Press, face, hairline, radius, space, useTheme } from './theme';
 import { Text } from './text';
 
 /* How things sit next to each other, and the surfaces they sit on. */
@@ -86,7 +86,7 @@ export function Divider() {
   const { t } = useTheme();
   return (
     <View
-      style={{ height: 0.5, backgroundColor: t.border.hairline, marginVertical: space[8] }}
+      style={{ height: hairline, backgroundColor: t.border.hairline, marginVertical: space[8] }}
     />
   );
 }

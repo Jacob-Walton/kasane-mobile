@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { Seal } from '../seal';
-import { Press, control, face, radius, shadow, space, useTheme } from './theme';
+import { Press, control, face, hairline, radius, shadow, space, useTheme } from './theme';
 import { useBarInsets } from './page';
 import { Text } from './text';
 
@@ -43,7 +43,7 @@ export function Bar({
           padding: space[8],
           backgroundColor: t.bg.surface,
           borderRadius: radius,
-          borderWidth: 0.5,
+          borderWidth: hairline,
           borderColor: t.border.hairline,
           shadowColor: shadow.bar.colour,
           shadowOffset: { width: shadow.bar.x, height: shadow.bar.y },

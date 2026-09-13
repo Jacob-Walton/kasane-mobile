@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   Animated,
   Easing,
@@ -9,7 +9,19 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { control, dark, light, motion, radius, room, shadow, space, type as ladder } from '../theme';
+import {
+  control,
+  dark,
+  focus,
+  hairline,
+  light,
+  motion,
+  radius,
+  room,
+  shadow,
+  space,
+  type as ladder,
+} from '../theme';
 
 /* The ground every part stands on: the theme the OS is in, the ladder a size comes from, and the
    one thing a phone has to add, which is how a press feels.
@@ -53,7 +65,7 @@ export const face = {
 
    The colour cannot go on the native driver, which is why this one animation runs in JS. It is one
    interpolation over 120ms. */
-export function usePressGround(rest: string, down: string) {
+export function usePressGround(rest: string, down: string, edge?: string, edgeDown?: string) {
   // useMemo, not useRef: the value is read while the style is built, which is render
   const at = useMemo(() => new Animated.Value(0), []);
   const cross = useMemo(
@@ -71,8 +83,40 @@ export function usePressGround(rest: string, down: string) {
 
   return {
     ground: at.interpolate({ inputRange: [0, 1], outputRange: [rest, down] }),
+    // the CSS transitions border-color beside background, so a border crosses on the same timing
+    edge:
+      edge === undefined
+        ? undefined
+        : at.interpolate({ inputRange: [0, 1], outputRange: [edge, edgeDown ?? edge] }),
     onPressIn: () => to(1),
     onPressOut: () => to(0),
+  };
+}
+
+/* :focus-visible in root.css is one rule for the whole system: a 2px outline in the focus colour,
+   2px off the edge. React Native takes outlineWidth, outlineColor and outlineOffset as real style
+   props, so this is the same declaration and not an imitation of it.
+
+   The web fires :focus-visible for a keyboard and not for a pointer. A phone has the same split: a
+   tap moves focus without showing a ring, an external keyboard or Switch Control shows one. RN
+   reports both through onFocus, so the ring follows focus and a press clears it, which is what a
+   pointer does on the web. */
+export function useFocusRing() {
+  const { t } = useTheme();
+  const [on, setOn] = useState(false);
+  return {
+    ring: on
+      ? {
+          outlineWidth: focus.width,
+          outlineColor: t.focus.color,
+          outlineOffset: focus.offset,
+          outlineStyle: 'solid' as const,
+        }
+      : null,
+    onFocus: useCallback(() => setOn(true), []),
+    onBlur: useCallback(() => setOn(false), []),
+    // a pointer does not raise the ring on the web either
+    clear: useCallback(() => setOn(false), []),
   };
 }
 
@@ -80,6 +124,8 @@ export function usePressGround(rest: string, down: string) {
 export function Press({
   rest,
   down,
+  edge,
+  edgeDown,
   grow,
   style,
   children,
@@ -89,22 +135,36 @@ export function Press({
   rest: string;
   /** the ground under a finger */
   down: string;
+  /** the border at rest, when a press moves it too */
+  edge?: string;
+  /** and the border under a finger */
+  edgeDown?: string;
   /** fills the row it is in. The shape is on the inner view, so the outer one has to be told. */
   grow?: boolean;
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
 } & Omit<PressableProps, 'style' | 'children'>) {
-  const { ground, onPressIn, onPressOut } = usePressGround(rest, down);
+  const { ground, edge: edgeNow, onPressIn, onPressOut } = usePressGround(rest, down, edge, edgeDown);
+  const focusRing = useFocusRing();
   return (
     <Pressable
       // a target inside a list waits to see whether the touch was a scroll. Nothing should wait.
       unstable_pressDelay={0}
-      onPressIn={onPressIn}
+      onPressIn={() => {
+        focusRing.clear();
+        onPressIn();
+      }}
       onPressOut={onPressOut}
+      onFocus={focusRing.onFocus}
+      onBlur={focusRing.onBlur}
       style={grow ? { flex: 1 } : undefined}
       {...props}
     >
-      <Animated.View style={[{ backgroundColor: ground }, style]}>{children}</Animated.View>
+      <Animated.View
+        style={[{ backgroundColor: ground }, edgeNow ? { borderColor: edgeNow } : null, style, focusRing.ring]}
+      >
+        {children}
+      </Animated.View>
     </Pressable>
   );
 }
@@ -125,5 +185,5 @@ export function useEased(value: number) {
   return at;
 }
 
-export { control, motion, radius, room, shadow, space };
+export { control, focus, hairline, motion, radius, room, shadow, space };
 export type Ink = ReturnType<typeof useTheme>['t'];

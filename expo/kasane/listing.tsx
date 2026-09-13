@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import { Press, face, radius, space, useTheme } from './theme';
+import { Press, face, hairline, radius, space, useTheme } from './theme';
 import { Text } from './text';
 
 /* A listing: one box carrying a header strip and the rows it belongs to, drawn as one surface and
@@ -17,7 +17,7 @@ export function Listing({ children }: { children: ReactNode }) {
       style={{
         backgroundColor: t.bg.surface,
         borderRadius: radius,
-        borderWidth: 0.5,
+        borderWidth: hairline,
         borderColor: t.border.hairline,
         overflow: 'hidden',
       }}
@@ -37,7 +37,7 @@ export function ListingHead({ children }: { children: ReactNode }) {
         gap: space[12],
         paddingHorizontal: space[16],
         paddingVertical: space[12],
-        borderBottomWidth: 0.5,
+        borderBottomWidth: hairline,
         borderBottomColor: t.border.hairline,
       }}
     >
@@ -117,7 +117,7 @@ export function ListingRow({
     gap: space[12],
     paddingHorizontal: space[16],
     paddingVertical: space[12],
-    borderTopWidth: first ? 0 : 0.5,
+    borderTopWidth: first ? 0 : hairline,
     borderTopColor: t.border.hairline,
   };
   if (!onPress) return <View style={shape}>{body}</View>;

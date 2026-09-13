@@ -10,7 +10,7 @@ import {
 import { Modal, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconCheck, IconChevronDown, IconClose } from '../icons';
-import { Press, control, radius, shadow, space, useTheme } from './theme';
+import { Press, control, hairline, radius, shadow, space, useTheme } from './theme';
 import { Cluster, Stack } from './layout';
 import { Text } from './text';
 import { Button } from './controls';
@@ -167,7 +167,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 padding: space[12],
                 backgroundColor: t.bg.toast,
                 borderRadius: radius,
-                borderWidth: 0.5,
+                borderWidth: hairline,
                 borderColor: t.border.toast,
               }}
             >

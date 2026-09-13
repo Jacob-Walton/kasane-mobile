@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
-import { Press, face, radius, space, useTheme } from './theme';
+import { Press, face, hairline, radius, space, useTheme } from './theme';
 import { Text } from './text';
 
 /* A table, and the one place a rule between repeating rows belongs. Everything else told apart by
@@ -56,7 +56,7 @@ export function Table<T>({
           gap: space[12],
           paddingHorizontal: space[16],
           paddingVertical: space[8],
-          borderBottomWidth: 0.5,
+          borderBottomWidth: hairline,
           borderBottomColor: t.border.hairline,
         }}
       >
@@ -87,7 +87,7 @@ export function Table<T>({
           gap: space[12],
           paddingHorizontal: space[16],
           paddingVertical: space[12],
-          borderBottomWidth: i === rows.length - 1 ? 0 : 0.5,
+          borderBottomWidth: i === rows.length - 1 ? 0 : hairline,
           borderBottomColor: t.border.hairline,
         };
         return onPressRow ? (
@@ -96,7 +96,7 @@ export function Table<T>({
             accessibilityRole="button"
             onPress={() => onPressRow(row)}
             rest={t.bg.surface}
-            down={t.bg.raised}
+            down={t.bg.pressed}
             style={shape}
           >
             {body}
